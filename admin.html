@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Console | The Bunny Luxury Hair & Beauty Studio</title>
+  <meta name="theme-color" content="#0a0b0e">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    .tab-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-sub);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: rgba(212, 175, 55, 0.15);
+      border-color: var(--border-gold);
+      color: var(--gold-light);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Offline Banner -->
+  <div id="offline-banner" class="offline-banner hidden" role="alert">
+    <span>⚠️ You're offline. Management tools unavailable while offline.</span>
+  </div>
+
+  <div class="dashboard-container">
+    
+    <!-- Navigation Bar -->
+    <nav class="dashboard-nav">
+      <div class="nav-brand">
+        <span style="font-size: 24px;">👑</span>
+        <div>
+          <div class="nav-brand-title">The Bunny Admin Console</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Executive Loyalty Management</div>
+        </div>
+      </div>
+
+      <div id="nav-user-panel" class="nav-user hidden">
+        <div style="text-align: right;">
+          <div id="admin-name-display" style="font-size: 13px; font-weight: 600; color: #fff;">Admin</div>
+          <span class="nav-badge" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">Super Admin</span>
+        </div>
+        <a href="./staff.html" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">Staff Queue</a>
+        <button id="signout-btn" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- Login View (When Not Authenticated) -->
+    <div id="login-view" class="luxury-card" style="max-width: 420px; margin: 40px auto 0;">
+      <div class="text-center mb-4">
+        <span style="font-size: 32px;">👑</span>
+        <h2 style="font-family: var(--font-serif); font-size: 20px; color: var(--gold-light); margin-top: 8px;">Salon Executive Login</h2>
+        <p style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">Admin privileges required</p>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="admin-email-input" class="form-label">Administrator Email</label>
+          <input type="email" id="admin-email-input" class="form-input" placeholder="admin@thebunnysalon.com" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label for="admin-password-input" class="form-label">Password</label>
+          <input type="password" id="admin-password-input" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block mt-4">
+          <span>Access Admin Console</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Unauthorized Access Notice -->
+    <div id="unauthorized-view" class="luxury-card hidden text-center" style="max-width: 460px; margin: 40px auto;">
+      <div style="font-size: 40px; margin-bottom: 12px;">🚫</div>
+      <h3 style="color: var(--crimson); font-size: 18px; margin-bottom: 8px;">Administrator Privileges Required</h3>
+      <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+        Your account does not possess administrator permissions for The Bunny Luxury Hair & Beauty Studio.
+      </p>
+      <a href="./staff.html" class="btn btn-secondary">Go to Staff Portal</a>
+    </div>
+
+    <!-- Main Admin Dashboard -->
+    <main id="admin-main-view" class="hidden" style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Metrics Overview -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Customers</div>
+          <div id="metric-total-customers" class="metric-value">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Visits Recorded</div>
+          <div id="metric-total-visits" class="metric-value">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Rewards Issued</div>
+          <div id="metric-rewards-issued" class="metric-value" style="color: var(--gold-light);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Rewards Redeemed (₹)</div>
+          <div id="metric-rewards-redeemed-val" class="metric-value" style="color: var(--emerald);">₹0</div>
+        </div>
+      </section>
+
+      <!-- Navigation Tabs -->
+      <section class="luxury-card">
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="customers-tab">Customer Roster</button>
+          <button class="tab-btn" data-tab="staff-tab">Staff Access Management</button>
+          <button class="tab-btn" data-tab="history-tab">Visit & Reward Audit Logs</button>
+        </div>
+
+        <!-- Tab 1: Customers -->
+        <div id="customers-tab" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+            <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light);">Enrolled Loyalty Clients</h3>
+            <input type="text" id="customer-search-input" class="form-input" placeholder="Search by name or phone..." style="max-width: 260px; padding: 8px 12px; font-size: 13px;">
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Client Name</th>
+                  <th>Phone Number</th>
+                  <th>Current Stamps</th>
+                  <th>Cycle</th>
+                  <th>Total Visits</th>
+                  <th>Total Rewards</th>
+                  <th>Enrolled Date</th>
+                </tr>
+              </thead>
+              <tbody id="customers-table-body">
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading customer roster...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Staff Management -->
+        <div id="staff-tab" class="tab-content hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light);">Staff Roster & Permissions</h3>
+              <p style="font-size: 12px; color: var(--text-sub);">Authorize or revoke salon staff access in real-time.</p>
+            </div>
+            <button id="add-staff-toggle-btn" class="btn btn-primary" style="font-size: 12px; padding: 8px 14px;">+ Register Staff Member</button>
+          </div>
+
+          <!-- Add Staff Form -->
+          <div id="add-staff-panel" class="luxury-card mb-4 hidden" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-gold);">
+            <h4 style="font-size: 14px; font-weight: 700; color: var(--gold-light); margin-bottom: 12px;">Add New Staff Profile</h4>
+            <form id="add-staff-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: flex-end;">
+              <div class="form-group" style="margin: 0;">
+                <label for="new-staff-uid" class="form-label">Firebase Auth UID</label>
+                <input type="text" id="new-staff-uid" class="form-input" placeholder="User UID from Firebase Auth" required>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label for="new-staff-name" class="form-label">Staff Name</label>
+                <input type="text" id="new-staff-name" class="form-input" placeholder="e.g. Priya Sharma" required>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label for="new-staff-role" class="form-label">Role</label>
+                <select id="new-staff-role" class="form-input">
+                  <option value="staff">Staff Specialist</option>
+                  <option value="admin">Salon Administrator</option>
+                </select>
+              </div>
+              <button type="submit" id="save-staff-btn" class="btn btn-success" style="height: 46px;">Save Staff</button>
+            </form>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Staff Name</th>
+                  <th>UID</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staff-table-body">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading staff roster...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: History & Audit -->
+        <div id="history-tab" class="tab-content hidden">
+          <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light); margin-bottom: 14px;">Historical Visit Logs</h3>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Customer UID</th>
+                  <th>Cycle #</th>
+                  <th>Stamp #</th>
+                  <th>Status</th>
+                  <th>Approved By</th>
+                </tr>
+              </thead>
+              <tbody id="audit-table-body">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading logs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Admin Script -->
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

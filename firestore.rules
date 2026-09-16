@@ -1,0 +1,187 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isCustomer(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function getStaffData() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data;
+    }
+
+    function isStaffMember() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+
+    function isActiveStaff() {
+      return isStaffMember() && getStaffData().active == true;
+    }
+
+    function isAdmin() {
+      return isActiveStaff() && getStaffData().role == 'admin';
+    }
+
+    // ----------------------------------------------------
+    // CUSTOMERS COLLECTION
+    // ----------------------------------------------------
+    match /customers/{uid} {
+      // Customers can read their own profile; Active staff/admin can read customer profiles
+      allow read: if isCustomer(uid) || isActiveStaff();
+
+      // Only the authenticated customer can create their own initial profile
+      allow create: if isCustomer(uid)
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches('^[6-9][0-9]{9}$')
+        && request.resource.data.stampCount == 0
+        && request.resource.data.cycleNumber == 1
+        && request.resource.data.totalVisits == 0
+        && request.resource.data.totalRewards == 0
+        && request.resource.data.rewardAvailable == false
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && (!('lastVisitAt' in request.resource.data) || request.resource.data.lastVisitAt == null);
+
+      // Updates:
+      // 1. Customer updating their own profile (name, phone) - cannot touch stamps/rewards/cycles
+      // 2. Active Staff during approval transaction or reward redemption
+      allow update: if (
+        // Customer profile self-update (contact info only)
+        isCustomer(uid)
+        && request.resource.data.stampCount == resource.data.stampCount
+        && request.resource.data.cycleNumber == resource.data.cycleNumber
+        && request.resource.data.totalVisits == resource.data.totalVisits
+        && request.resource.data.totalRewards == resource.data.totalRewards
+        && request.resource.data.rewardAvailable == resource.data.rewardAvailable
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches('^[6-9][0-9]{9}$')
+      ) || (
+        // Active Staff performing transaction (visit approval or reward redemption)
+        isActiveStaff()
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.phone == resource.data.phone
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.stampCount is int
+        && request.resource.data.stampCount >= 0
+        && request.resource.data.stampCount <= 10
+        && request.resource.data.cycleNumber is int
+        && request.resource.data.cycleNumber >= resource.data.cycleNumber
+        && request.resource.data.totalVisits is int
+        && request.resource.data.totalVisits >= resource.data.totalVisits
+        && request.resource.data.totalRewards is int
+        && request.resource.data.totalRewards >= resource.data.totalRewards
+        && request.resource.data.rewardAvailable is bool
+      );
+
+      // Only Admin can delete customer records
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------
+    // VISITS COLLECTION
+    // ----------------------------------------------------
+    match /visits/{visitId} {
+      // Customers can read their own visits; Active staff/admin can read all visits
+      allow read: if (isAuthenticated() && resource.data.customerId == request.auth.uid)
+        || isActiveStaff();
+
+      // Customer creates their own pending visit
+      allow create: if isAuthenticated()
+        && request.resource.data.customerId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.stampNumber == 0
+        && request.resource.data.cycleNumber is int
+        && request.resource.data.cycleNumber >= 1
+        && request.resource.data.createdAt == request.time
+        && (!('approvedAt' in request.resource.data) || request.resource.data.approvedAt == null)
+        && (!('approvedBy' in request.resource.data) || request.resource.data.approvedBy == null);
+
+      // Active staff approves or rejects pending visit
+      allow update: if isActiveStaff()
+        && resource.data.status == 'pending'
+        && (request.resource.data.status == 'approved' || request.resource.data.status == 'rejected')
+        && request.resource.data.customerId == resource.data.customerId
+        && request.resource.data.cycleNumber == resource.data.cycleNumber
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.approvedAt == request.time
+        && request.resource.data.approvedBy == request.auth.uid
+        && (
+          (request.resource.data.status == 'approved' && request.resource.data.stampNumber >= 1 && request.resource.data.stampNumber <= 10)
+          || (request.resource.data.status == 'rejected' && request.resource.data.stampNumber == 0)
+        );
+
+      // Only Admin can delete visit records
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------
+    // REWARDS COLLECTION
+    // ----------------------------------------------------
+    match /rewards/{rewardId} {
+      // Customers can read their own rewards; Active staff/admin can read all rewards
+      allow read: if (isAuthenticated() && resource.data.customerId == request.auth.uid)
+        || isActiveStaff();
+
+      // Rewards are created ONLY by active staff as part of 10th visit approval transaction
+      allow create: if isActiveStaff()
+        && request.resource.data.status == 'available'
+        && request.resource.data.type == 'complimentary_service'
+        && request.resource.data.value == 3000
+        && request.resource.data.cycleNumber is int
+        && request.resource.data.cycleNumber >= 1
+        && request.resource.data.customerId is string
+        && request.resource.data.createdAt == request.time
+        && (!('redeemedAt' in request.resource.data) || request.resource.data.redeemedAt == null)
+        && (!('redeemedBy' in request.resource.data) || request.resource.data.redeemedBy == null);
+
+      // Active staff redeems reward
+      allow update: if isActiveStaff()
+        && resource.data.status == 'available'
+        && request.resource.data.status == 'redeemed'
+        && request.resource.data.customerId == resource.data.customerId
+        && request.resource.data.cycleNumber == resource.data.cycleNumber
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.value == resource.data.value
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.redeemedAt == request.time
+        && request.resource.data.redeemedBy == request.auth.uid;
+
+      // Only Admin can delete reward records
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------
+    // STAFF COLLECTION
+    // ----------------------------------------------------
+    match /staff/{uid} {
+      // Staff member can read their own profile; Active staff/admin can list staff
+      allow read: if (isAuthenticated() && request.auth.uid == uid) || isActiveStaff();
+
+      // Only Admin can create, update, or delete staff records
+      allow write: if isAdmin();
+    }
+
+    // ----------------------------------------------------
+    // DEFAULT DENY FOR EVERYTHING ELSE
+    // ----------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

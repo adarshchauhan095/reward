@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bunny Loyalty Club | The Bunny Luxury Hair & Beauty Studio</title>
+  <meta name="description" content="Exclusive loyalty rewards program at The Bunny Luxury Hair & Beauty Studio. Visit 10 times and unlock a complimentary service worth ₹3,000.">
+  <meta name="theme-color" content="#0a0b0e">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <!-- Offline Banner -->
+  <div id="offline-banner" class="offline-banner hidden" role="alert">
+    <span>⚠️ You're offline. Please reconnect and try again.</span>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- Brand Header -->
+    <header class="brand-header">
+      <div class="brand-icon" aria-hidden="true">🐰</div>
+      <div class="studio-name">The Bunny</div>
+      <h1 class="club-title">Loyalty Club</h1>
+      <p class="offer-tagline">
+        Visit 10 times and unlock a complimentary service worth <strong>₹3,000</strong>.
+      </p>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading-view" class="luxury-card text-center">
+      <div class="spinner" style="margin: 30px auto; width: 32px; height: 32px; border-width: 3px; border-color: var(--border-gold); border-top-color: var(--gold-light);"></div>
+      <p style="color: var(--text-sub); font-size: 14px;">Connecting to salon network...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-view" class="luxury-card hidden text-center">
+      <div style="font-size: 36px; margin-bottom: 12px;">⚠️</div>
+      <h3 style="color: var(--gold-light); margin-bottom: 8px;">Notice</h3>
+      <p id="error-message" style="color: var(--text-sub); font-size: 14px; margin-bottom: 18px;"></p>
+      <button id="retry-btn" class="btn btn-secondary">Retry</button>
+    </div>
+
+    <!-- Registration View (First Visit Only) -->
+    <div id="registration-view" class="luxury-card hidden">
+      <div class="text-center mb-4">
+        <h2 style="font-family: var(--font-serif); font-size: 20px; color: var(--gold-light);">Welcome to Luxury Care</h2>
+        <p style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">Join our privileged circle to begin collecting stamps.</p>
+      </div>
+
+      <form id="registration-form" novalidate>
+        <div class="form-group">
+          <label for="customer-name-input" class="form-label">Full Name</label>
+          <input 
+            type="text" 
+            id="customer-name-input" 
+            class="form-input" 
+            placeholder="e.g. Aditi Sharma" 
+            maxlength="60" 
+            required 
+            autocomplete="name"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="customer-phone-input" class="form-label">Mobile Number (India)</label>
+          <div class="phone-wrapper">
+            <span class="phone-prefix">+91</span>
+            <input 
+              type="tel" 
+              id="customer-phone-input" 
+              class="form-input" 
+              placeholder="9876543210" 
+              maxlength="10" 
+              pattern="[6-9][0-9]{9}" 
+              required 
+              autocomplete="tel-national"
+            >
+          </div>
+          <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">10-digit Indian mobile number</small>
+        </div>
+
+        <button type="submit" id="join-btn" class="btn btn-primary btn-block mt-4">
+          <span>Join Loyalty Club</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Loyalty Card View (Registered & Returning Customers) -->
+    <div id="loyalty-view" class="luxury-card hidden">
+      
+      <!-- Customer Info Header -->
+      <div class="customer-meta">
+        <div class="customer-name">
+          <span>✨</span>
+          <span id="display-name">Guest</span>
+        </div>
+        <div id="cycle-badge" class="cycle-badge">Cycle 1</div>
+      </div>
+
+      <!-- 10-Stamp Grid -->
+      <div class="loyalty-grid" id="stamp-grid" aria-label="10 visit loyalty card">
+        <!-- 10 cells generated dynamically via app.js -->
+      </div>
+
+      <!-- Progress Track -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <span>Progress: <strong id="progress-text">0 / 10</strong></span>
+          <span id="remaining-text" style="color: var(--gold-light); font-weight: 500;">10 visits remaining</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="10">
+          <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Dynamic Visit Status Card -->
+      <div id="status-box" class="status-card hidden">
+        <div id="status-icon" class="status-icon">⏳</div>
+        <div class="status-content">
+          <h4 id="status-title">Visit Status</h4>
+          <p id="status-desc">Loading status...</p>
+        </div>
+      </div>
+
+      <!-- Action Button for Check-in -->
+      <div id="checkin-container" class="mt-4">
+        <button id="checkin-btn" class="btn btn-primary btn-block">
+          <span>Record Today's Visit</span>
+        </button>
+      </div>
+
+      <!-- Reward Voucher Card (Shown when 10th visit reached) -->
+      <div id="reward-voucher" class="luxury-card mt-4 hidden" style="background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.25), rgba(18, 20, 28, 0.95)); border: 1px solid var(--gold-primary);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold-light); font-weight: 700;">VIP Voucher</span>
+          <span style="font-size: 18px;">👑</span>
+        </div>
+        <div style="font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: #fff;">₹3,000 Complimentary Service</div>
+        <p style="font-size: 12px; color: var(--text-sub); margin-top: 4px;">
+          Present this screen to your salon specialist to redeem your complimentary hair or beauty service.
+        </p>
+        <div style="margin-top: 12px; padding: 6px 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); border-radius: var(--radius-sm); font-size: 12px; color: #6ee7b7; font-weight: 600; text-align: center;">
+          ✓ Ready for Staff Redemption
+        </div>
+      </div>
+
+      <!-- History Accordion -->
+      <div class="mt-4" style="border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+        <button id="toggle-history-btn" class="btn btn-secondary btn-block" style="font-size: 12px; padding: 8px 12px;">
+          <span>View Visit History</span>
+        </button>
+        <div id="history-container" class="history-list hidden">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Links -->
+    <footer class="text-center" style="margin-top: 16px;">
+      <p style="font-size: 11px; color: var(--text-muted);">
+        The Bunny Luxury Hair & Beauty Studio &copy; 2026<br>
+        <a href="./staff.html" style="color: var(--text-muted); text-decoration: underline; margin-top: 4px; display: inline-block;">Staff Portal</a>
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- App Script -->
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

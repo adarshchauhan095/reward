@@ -1,0 +1,15 @@
+{
+  "name": "the-bunny-loyalty-club",
+  "version": "1.0.0",
+  "description": "The Bunny Loyalty Club - Luxury Hair & Beauty Studio",
+  "type": "module",
+  "scripts": {
+    "test:rules": "node tests/test-rules.js",
+    "test:flows": "node tests/test-flows.js",
+    "test": "node tests/run-all-tests.js",
+    "serve": "npx serve -l 3000 ."
+  },
+  "keywords": ["firebase", "loyalty", "salon"],
+  "author": "",
+  "license": "ISC"
+}
