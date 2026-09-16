@@ -390,7 +390,7 @@ function initPendingQueue() {
 
     for (const docSnap of docs) {
       const visit = { id: docSnap.id, ...docSnap.data() };
-      
+
       // Fetch customer doc for details
       let customerName = 'Guest';
       let customerPhone = 'N/A';
@@ -412,7 +412,7 @@ function initPendingQueue() {
       card.className = 'queue-card';
 
       const infoDiv = document.createElement('div');
-      
+
       const nameH = document.createElement('div');
       nameH.className = 'queue-customer-name';
       nameH.textContent = customerName; // Safe textContent (XSS Protection)
@@ -485,7 +485,7 @@ function initRewardsQueue() {
 
     for (const docSnap of docs) {
       const reward = { id: docSnap.id, ...docSnap.data() };
-      
+
       let customerName = 'Guest';
       let customerPhone = 'N/A';
 
@@ -505,7 +505,7 @@ function initRewardsQueue() {
       card.style.borderColor = 'var(--gold-primary)';
 
       const infoDiv = document.createElement('div');
-      
+
       const nameH = document.createElement('div');
       nameH.className = 'queue-customer-name';
       nameH.textContent = `👑 ${customerName}`; // Safe textContent
@@ -659,7 +659,7 @@ function initStaffApp() {
       currentStaff = staffDoc.data();
       staffNameDisplay.textContent = currentStaff.name || user.email;
       staffRoleBadge.textContent = currentStaff.role === 'admin' ? 'Admin' : 'Staff';
-      
+
       if (currentStaff.role === 'admin') {
         adminLinkBtn.classList.remove('hidden');
       } else {
