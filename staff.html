@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Portal | The Bunny Luxury Hair & Beauty Studio</title>
+  <meta name="theme-color" content="#0a0b0e">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <!-- Offline Banner -->
+  <div id="offline-banner" class="offline-banner hidden" role="alert">
+    <span>⚠️ You're offline. Changes cannot be saved until reconnected.</span>
+  </div>
+
+  <div class="dashboard-container">
+    
+    <!-- Navigation Bar -->
+    <nav class="dashboard-nav">
+      <div class="nav-brand">
+        <span style="font-size: 24px;">🐰</span>
+        <div>
+          <div class="nav-brand-title">The Bunny Staff Portal</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Salon Verification Console</div>
+        </div>
+      </div>
+
+      <div id="nav-user-panel" class="nav-user hidden">
+        <div style="text-align: right;">
+          <div id="staff-name-display" style="font-size: 13px; font-weight: 600; color: #fff;">Staff</div>
+          <span id="staff-role-badge" class="nav-badge">Staff</span>
+        </div>
+        <a id="admin-link-btn" href="./admin.html" class="btn btn-secondary hidden" style="font-size: 12px; padding: 6px 12px;">Admin</a>
+        <button id="signout-btn" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- Login View (When Not Authenticated) -->
+    <div id="login-view" class="luxury-card" style="max-width: 420px; margin: 40px auto 0;">
+      <div class="text-center mb-4">
+        <span style="font-size: 32px;">🔐</span>
+        <h2 style="font-family: var(--font-serif); font-size: 20px; color: var(--gold-light); margin-top: 8px;">Salon Staff Sign In</h2>
+        <p style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">Authorized personnel only</p>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="staff-email-input" class="form-label">Staff Email</label>
+          <input type="email" id="staff-email-input" class="form-input" placeholder="staff@thebunnysalon.com" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label for="staff-password-input" class="form-label">Password</label>
+          <input type="password" id="staff-password-input" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block mt-4">
+          <span>Sign In to Portal</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Unauthorized Access Notice -->
+    <div id="unauthorized-view" class="luxury-card hidden text-center" style="max-width: 460px; margin: 40px auto;">
+      <div style="font-size: 40px; margin-bottom: 12px;">🚫</div>
+      <h3 style="color: var(--crimson); font-size: 18px; margin-bottom: 8px;">Access Denied</h3>
+      <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+        Your Google/Firebase account is not registered as an active staff member. Please contact the Salon Administrator for authorization.
+      </p>
+      <button id="unauthorized-signout-btn" class="btn btn-secondary">Sign In With Another Account</button>
+    </div>
+
+    <!-- Main Staff Dashboard -->
+    <main id="staff-main-view" class="hidden" style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Real-time Metrics -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Pending Verifications</div>
+          <div id="metric-pending-count" class="metric-value" style="color: var(--amber);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Approved Visits Today</div>
+          <div id="metric-approved-count" class="metric-value" style="color: var(--emerald);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Rewards Ready</div>
+          <div id="metric-rewards-available" class="metric-value" style="color: var(--gold-light);">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Rewards Redeemed</div>
+          <div id="metric-rewards-redeemed" class="metric-value">0</div>
+        </div>
+      </section>
+
+      <!-- Section: Live Pending Visits Queue -->
+      <section class="luxury-card">
+        <div class="section-title">
+          <span>Pending Customer Visits</span>
+          <span id="queue-live-indicator" style="font-size: 12px; font-weight: 500; color: var(--emerald); display: flex; align-items: center; gap: 6px;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); animation: pulseSlot 1.5s infinite;"></span>
+            Live Queue
+          </span>
+        </div>
+
+        <div id="pending-queue" class="queue-grid">
+          <div class="empty-state">
+            <div class="empty-state-icon">☕</div>
+            <p>No customers currently waiting for verification.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Unlocked Rewards Ready for Redemption -->
+      <section class="luxury-card">
+        <div class="section-title">
+          <span>₹3,000 Rewards Awaiting Redemption</span>
+        </div>
+
+        <div id="rewards-queue" class="queue-grid">
+          <div class="empty-state">
+            <div class="empty-state-icon">🎁</div>
+            <p>No customers currently waiting to redeem rewards.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Today's Approved Visits Log -->
+      <section class="luxury-card">
+        <div class="section-title">
+          <span>Today's Approved Visits</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Customer</th>
+                <th>Mobile</th>
+                <th>Stamp #</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="approved-visits-table-body">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                  No visits approved today yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Staff Script -->
+  <script type="module" src="./staff.js"></script>
+</body>
+</html>
