@@ -29,6 +29,7 @@ const navUserPanel = document.getElementById('nav-user-panel');
 const adminNameDisplay = document.getElementById('admin-name-display');
 const signoutBtn = document.getElementById('signout-btn');
 
+const adminLoadingView = document.getElementById('admin-loading-view');
 const loginView = document.getElementById('login-view');
 const loginForm = document.getElementById('login-form');
 const adminEmailInput = document.getElementById('admin-email-input');
@@ -467,12 +468,25 @@ function initAdminApp() {
   updateOfflineStatus();
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
+    // Hide initial loader once auth state resolves
+    if (adminLoadingView) adminLoadingView.classList.add('hidden');
+
+    // Treat unauthenticated visitors or anonymous customer sessions as needing admin sign in
+    if (!user || user.isAnonymous) {
       currentAdmin = null;
       navUserPanel.classList.add('hidden');
       loginView.classList.remove('hidden');
       unauthorizedView.classList.add('hidden');
       adminMainView.classList.add('hidden');
+
+      // Silently clear anonymous customer session
+      if (user && user.isAnonymous) {
+        try {
+          await signOut(auth);
+        } catch (e) {
+          // ignore silent signout error
+        }
+      }
       return;
     }
 

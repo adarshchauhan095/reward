@@ -31,6 +31,7 @@ const staffRoleBadge = document.getElementById('staff-role-badge');
 const adminLinkBtn = document.getElementById('admin-link-btn');
 const signoutBtn = document.getElementById('signout-btn');
 
+const staffLoadingView = document.getElementById('staff-loading-view');
 const loginView = document.getElementById('login-view');
 const loginForm = document.getElementById('login-form');
 const staffEmailInput = document.getElementById('staff-email-input');
@@ -634,17 +635,29 @@ function initStaffApp() {
   updateOfflineStatus();
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      // Show login form
+    // Hide initial loader once auth state resolves
+    if (staffLoadingView) staffLoadingView.classList.add('hidden');
+
+    // Treat unauthenticated visitors or anonymous customer sessions as needing staff sign in
+    if (!user || user.isAnonymous) {
       currentStaff = null;
       navUserPanel.classList.add('hidden');
       loginView.classList.remove('hidden');
       unauthorizedView.classList.add('hidden');
       staffMainView.classList.add('hidden');
+
+      // Silently clear anonymous customer session so staff portal has clean auth state
+      if (user && user.isAnonymous) {
+        try {
+          await signOut(auth);
+        } catch (e) {
+          // ignore silent signout error
+        }
+      }
       return;
     }
 
-    // Verify staff role in Firestore
+    // Verify staff role in Firestore for genuine authenticated account
     try {
       const staffDoc = await getDoc(doc(db, 'staff', user.uid));
       if (!staffDoc.exists() || staffDoc.data().active !== true) {

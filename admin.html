@@ -68,8 +68,15 @@
       </div>
     </nav>
 
+    <!-- Initial Loading State (Shown while verifying admin session on page load/refresh) -->
+    <div id="admin-loading-view" class="luxury-card text-center" style="max-width: 440px; margin: 40px auto 0;">
+      <div class="spinner" style="margin: 24px auto; width: 34px; height: 34px; border-width: 3px; border-color: var(--border-gold); border-top-color: var(--gold-light);"></div>
+      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light); margin-bottom: 6px;">Verifying Admin Access</h3>
+      <p style="color: var(--text-sub); font-size: 13px;">Checking administrative privileges...</p>
+    </div>
+
     <!-- Login View (When Not Authenticated) -->
-    <div id="login-view" class="luxury-card" style="max-width: 420px; margin: 40px auto 0;">
+    <div id="login-view" class="luxury-card hidden" style="max-width: 420px; margin: 40px auto 0;">
       <div class="text-center mb-4">
         <span style="font-size: 32px;">👑</span>
         <h2 style="font-family: var(--font-serif); font-size: 20px; color: var(--gold-light); margin-top: 8px;">Salon Executive Login</h2>
