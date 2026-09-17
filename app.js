@@ -577,5 +577,48 @@ retryBtn.addEventListener('click', () => {
   window.location.reload();
 });
 
+// ----------------------------------------------------
+// Terms & Conditions Modal Handlers
+// ----------------------------------------------------
+const termsModal = document.getElementById('terms-modal');
+const termsModalCloseBtn = document.getElementById('terms-modal-close-btn');
+const termsModalOkBtn = document.getElementById('terms-modal-ok-btn');
+const termsOpenBtns = document.querySelectorAll('.terms-open-btn');
+
+function openTermsModal(e) {
+  if (e) e.preventDefault();
+  if (termsModal) {
+    termsModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeTermsModal() {
+  if (termsModal) {
+    termsModal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+}
+
+if (termsOpenBtns) {
+  termsOpenBtns.forEach(btn => btn.addEventListener('click', openTermsModal));
+}
+if (termsModalCloseBtn) termsModalCloseBtn.addEventListener('click', closeTermsModal);
+if (termsModalOkBtn) termsModalOkBtn.addEventListener('click', closeTermsModal);
+
+if (termsModal) {
+  termsModal.addEventListener('click', (e) => {
+    if (e.target === termsModal) {
+      closeTermsModal();
+    }
+  });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && termsModal && !termsModal.classList.contains('hidden')) {
+    closeTermsModal();
+  }
+});
+
 // Start app
 initializeApp();

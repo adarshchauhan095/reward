@@ -89,6 +89,12 @@
         <button type="submit" id="join-btn" class="btn btn-primary btn-block mt-4">
           <span>Join Loyalty Club</span>
         </button>
+
+        <!-- Terms & Conditions Link on Registration View -->
+        <div class="terms-notice text-center mt-3">
+          By joining, you agree to our 
+          <a href="./terms.html" class="terms-link terms-open-btn" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+        </div>
       </form>
     </div>
 
@@ -160,15 +166,106 @@
           <!-- Dynamically populated -->
         </div>
       </div>
+
+      <!-- Terms & Conditions Link on Dashboard View -->
+      <div class="text-center mt-4" style="border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+        <a href="./terms.html" class="terms-dash-link terms-open-btn" target="_blank" rel="noopener">
+          📜 Loyalty Terms &amp; Conditions
+        </a>
+      </div>
     </div>
 
     <!-- Footer Links -->
     <footer class="text-center" style="margin-top: 16px;">
-      <p style="font-size: 11px; color: var(--text-muted);">
-        The Bunny Luxury Hair & Beauty Studio &copy; 2026<br>
-        <a href="./staff.html" style="color: var(--text-muted); text-decoration: underline; margin-top: 4px; display: inline-block;">Staff Portal</a>
+      <p style="font-size: 11px; color: var(--text-muted); line-height: 1.8;">
+        The Bunny Luxury Hair &amp; Beauty Studio &copy; 2026<br>
+        <a href="./terms.html" class="terms-link terms-open-btn" target="_blank" rel="noopener" style="font-size: 11px; margin-right: 6px;">Terms &amp; Conditions</a> •
+        <a href="./staff.html" style="color: var(--text-muted); text-decoration: underline; margin-left: 6px;">Staff Portal</a>
       </p>
     </footer>
+
+  </div>
+
+  <!-- Terms & Conditions Modal Dialog -->
+  <div id="terms-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="terms-modal-title" class="modal-title">
+          <span>📜</span> Terms &amp; Conditions
+        </h3>
+        <button id="terms-modal-close-btn" class="modal-close-btn" aria-label="Close Terms and Conditions">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle);">
+          <div style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light); font-weight: 600;">The Bunny Loyalty Club</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">The Bunny Luxury Hair &amp; Beauty Studio • Last Updated: September 2026</div>
+        </div>
+
+        <p>By joining and using The Bunny Loyalty Club, you agree to the following Terms &amp; Conditions. Please read these terms carefully before participating in the loyalty program.</p>
+
+        <h4>1. About the Loyalty Program</h4>
+        <p>The Bunny Loyalty Club is a customer loyalty and rewards program operated by <strong>The Bunny Luxury Hair &amp; Beauty Studio</strong>. The program allows eligible customers to collect loyalty stamps for qualifying salon visits and unlock a complimentary eligible salon service/package after completing the required number of qualifying visits. The program is intended to reward genuine and regular customers of the salon.</p>
+
+        <h4>2. How the Loyalty Program Works</h4>
+        <p>Eligible customers can collect up to <strong>10 loyalty stamps in one reward cycle</strong>. A customer becomes eligible for the reward after successfully completing <strong>10 qualifying visits</strong>. After the 10th qualifying visit is approved, the customer will receive one loyalty reward with a stated value of <strong>up to ₹3,000</strong>, subject to these Terms &amp; Conditions and the salon's eligible reward menu. After the reward is successfully redeemed, the customer's loyalty cycle will restart from 0.</p>
+
+        <h4>3. Qualifying Visit</h4>
+        <p>A loyalty stamp is issued only for a genuine, completed and paid salon visit. To qualify for one stamp:</p>
+        <ul>
+          <li>The customer's final eligible bill must meet the salon's minimum qualifying spend (currently <strong>₹600 per visit</strong>, unless otherwise displayed).</li>
+          <li>The transaction must be genuine and actually paid for.</li>
+          <li>The customer must receive an eligible salon service.</li>
+          <li>The visit must be verified through the salon's loyalty system.</li>
+          <li>Only one stamp may be issued to one customer for one qualifying visit.</li>
+        </ul>
+
+        <h4>4. One Stamp Per Visit</h4>
+        <p>Only <strong>one loyalty stamp can be earned from one qualifying visit</strong>, regardless of the amount spent. (e.g. ₹600 → 1 stamp; ₹2,000 → 1 stamp; ₹5,000 → 1 stamp).</p>
+
+        <h4>5. Same-Day Transactions</h4>
+        <p>A customer cannot obtain multiple loyalty stamps by splitting transactions or making multiple purchases on the same day. Multiple bills created for the purpose of obtaining additional stamps may be treated as one qualifying visit.</p>
+
+        <h4>6. Genuine Visits Only</h4>
+        <p>Loyalty stamps are intended only for genuine visits to the salon. Prohibited activities include fake visits, fake transactions, repeated QR scanning without a genuine salon visit, manipulating browser storage/website, duplicate accounts, bot scripts, or exploiting technical bugs.</p>
+
+        <h4>7. QR Code Usage</h4>
+        <p>The salon's QR code is provided only as an access method. Scanning does not automatically guarantee a stamp; visits require confirmation/approval by the salon team. Scanning photos of QR codes outside the salon does not qualify.</p>
+
+        <h4>8. Loyalty Account &amp; 9. Mobile Number</h4>
+        <p>Customers must provide accurate personal information. Mobile numbers are used to identify accounts, maintain records, and assist with account recovery. Do not share credentials or device sessions.</p>
+
+        <h4>10. Loyalty Stamp Verification</h4>
+        <p>A stamp is considered valid only when successfully recorded in the salon's official loyalty system. Screenshots or manually altered images do not constitute proof.</p>
+
+        <h4>11. ₹3,000 Reward &amp; 12. Eligible Reward Services</h4>
+        <p>After completing 10 valid qualifying visits, the customer unlocks a complimentary salon service/package with a stated retail/service value of <strong>up to ₹3,000</strong>. The reward is a service benefit only, non-cash, non-refundable, non-transferable, and valid only on eligible services designated by the salon.</p>
+
+        <h4>14. Reward Expiry</h4>
+        <p>Each unlocked reward is valid for <strong>30 days from the date it is issued</strong>, unless another period is displayed.</p>
+
+        <h4>15. No Cash Alternative &amp; 16. No Combining Offers</h4>
+        <p>Rewards cannot be converted to cash or combined with other promotional offers or discount coupons unless expressly authorized.</p>
+
+        <h4>17. Additional Charges &amp; 18. Reward Redemption</h4>
+        <p>If a chosen service upgrade exceeds the covered ₹3,000 amount, the difference must be paid. Rewards must be presented to staff and show as 'Available' in the system.</p>
+
+        <h4>19. Fraud and Abuse &amp; 20. Technical Errors</h4>
+        <p>The salon reserves the right to reject suspicious visits, suspend accounts, and rectify unintended technical errors.</p>
+
+        <div style="background: rgba(223, 158, 142, 0.12); border: 1px solid rgba(223, 158, 142, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-top: 16px; font-size: 12px;">
+          <strong style="color: var(--rose-gold);">⚠️ Notice:</strong> Full 30-section terms and detailed policies are available on our dedicated Terms page.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="./terms.html" target="_blank" rel="noopener" class="terms-link" style="font-size: 12px;">
+          Open Full 30-Section Terms Page ↗
+        </a>
+        <button id="terms-modal-ok-btn" class="btn btn-secondary" style="font-size: 12px; padding: 6px 16px;">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
 
   </div>
 
