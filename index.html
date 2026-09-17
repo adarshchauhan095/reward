@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Bunny Loyalty Club | The Bunny Luxury Hair & Beauty Studio</title>
-  <meta name="description" content="Exclusive loyalty rewards program at The Bunny Luxury Hair & Beauty Studio. Visit 10 times and unlock a complimentary service worth ₹3,000.">
+  <meta name="description"
+    content="Exclusive loyalty rewards program at The Bunny Luxury Hair & Beauty Studio. Visit 10 times and unlock a complimentary service worth ₹3,000.">
   <meta name="theme-color" content="#0a0b0e">
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <link rel="stylesheet" href="./styles.css">
 </head>
+
 <body>
 
   <!-- Offline Banner -->
@@ -22,7 +27,7 @@
   </div>
 
   <div class="app-container">
-    
+
     <!-- Brand Header -->
     <header class="brand-header">
       <div class="brand-icon" aria-hidden="true">🐰</div>
@@ -35,7 +40,9 @@
 
     <!-- Loading State -->
     <div id="loading-view" class="luxury-card text-center">
-      <div class="spinner" style="margin: 30px auto; width: 32px; height: 32px; border-width: 3px; border-color: var(--border-gold); border-top-color: var(--gold-light);"></div>
+      <div class="spinner"
+        style="margin: 30px auto; width: 32px; height: 32px; border-width: 3px; border-color: var(--border-gold); border-top-color: var(--gold-light);">
+      </div>
       <p style="color: var(--text-sub); font-size: 14px;">Connecting to salon network...</p>
     </div>
 
@@ -50,40 +57,28 @@
     <!-- Registration View (First Visit Only) -->
     <div id="registration-view" class="luxury-card hidden">
       <div class="text-center mb-4">
-        <h2 style="font-family: var(--font-serif); font-size: 20px; color: var(--gold-light);">Welcome to Luxury Care</h2>
-        <p style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">Join our privileged circle to begin collecting stamps.</p>
+        <h2 style="font-family: var(--font-serif); font-size: 20px; color: var(--gold-light);">Welcome to Luxury Care
+        </h2>
+        <p style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">Join our privileged circle to begin
+          collecting stamps.</p>
       </div>
 
       <form id="registration-form" novalidate>
         <div class="form-group">
           <label for="customer-name-input" class="form-label">Full Name</label>
-          <input 
-            type="text" 
-            id="customer-name-input" 
-            class="form-input" 
-            placeholder="e.g. Aditi Sharma" 
-            maxlength="60" 
-            required 
-            autocomplete="name"
-          >
+          <input type="text" id="customer-name-input" class="form-input" placeholder="e.g. Aditi Sharma" maxlength="60"
+            required autocomplete="name">
         </div>
 
         <div class="form-group">
           <label for="customer-phone-input" class="form-label">Mobile Number (India)</label>
           <div class="phone-wrapper">
             <span class="phone-prefix">+91</span>
-            <input 
-              type="tel" 
-              id="customer-phone-input" 
-              class="form-input" 
-              placeholder="9876543210" 
-              maxlength="10" 
-              pattern="[6-9][0-9]{9}" 
-              required 
-              autocomplete="tel-national"
-            >
+            <input type="tel" id="customer-phone-input" class="form-input" placeholder="9876543210" maxlength="10"
+              pattern="[6-9][0-9]{9}" required autocomplete="tel-national">
           </div>
-          <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">10-digit Indian mobile number</small>
+          <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">10-digit Indian
+            mobile number</small>
         </div>
 
         <button type="submit" id="join-btn" class="btn btn-primary btn-block mt-4">
@@ -92,15 +87,16 @@
 
         <!-- Terms & Conditions Link on Registration View -->
         <div class="terms-notice text-center" style="margin-top: 22px;">
-          By joining, you agree to our 
-          <a href="./terms.html" class="terms-link terms-open-btn" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+          By joining, you agree to our
+          <a href="./terms.html" class="terms-link terms-open-btn" target="_blank" rel="noopener">Terms &amp;
+            Conditions</a>
         </div>
       </form>
     </div>
 
     <!-- Loyalty Card View (Registered & Returning Customers) -->
     <div id="loyalty-view" class="luxury-card hidden">
-      
+
       <!-- Customer Info Header -->
       <div class="customer-meta">
         <div class="customer-name">
@@ -143,16 +139,21 @@
       </div>
 
       <!-- Reward Voucher Card (Shown when 10th visit reached) -->
-      <div id="reward-voucher" class="luxury-card mt-4 hidden" style="background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.25), rgba(18, 20, 28, 0.95)); border: 1px solid var(--gold-primary);">
+      <div id="reward-voucher" class="luxury-card mt-4 hidden"
+        style="background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.25), rgba(18, 20, 28, 0.95)); border: 1px solid var(--gold-primary);">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-          <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold-light); font-weight: 700;">VIP Voucher</span>
+          <span
+            style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold-light); font-weight: 700;">VIP
+            Voucher</span>
           <span style="font-size: 18px;">👑</span>
         </div>
-        <div style="font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: #fff;">₹3,000 Complimentary Service</div>
+        <div style="font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: #fff;">₹3,000
+          Complimentary Service</div>
         <p style="font-size: 12px; color: var(--text-sub); margin-top: 4px;">
           Present this screen to your salon specialist to redeem your complimentary hair or beauty service.
         </p>
-        <div style="margin-top: 12px; padding: 6px 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); border-radius: var(--radius-sm); font-size: 12px; color: #6ee7b7; font-weight: 600; text-align: center;">
+        <div
+          style="margin-top: 12px; padding: 6px 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); border-radius: var(--radius-sm); font-size: 12px; color: #6ee7b7; font-weight: 600; text-align: center;">
           ✓ Ready for Staff Redemption
         </div>
       </div>
@@ -179,40 +180,55 @@
     <footer class="text-center" style="margin-top: 16px;">
       <p style="font-size: 11px; color: var(--text-muted); line-height: 1.8;">
         The Bunny Luxury Hair &amp; Beauty Studio &copy; 2026<br>
-        <a href="./terms.html" class="terms-link terms-open-btn" target="_blank" rel="noopener" style="font-size: 11px; margin-right: 6px;">Terms &amp; Conditions</a> •
-        <a href="./staff.html" style="color: var(--text-muted); text-decoration: underline; margin-left: 6px;">Staff Portal</a>
+        <!-- <a href="./terms.html" class="terms-link terms-open-btn" target="_blank" rel="noopener" style="font-size: 11px; margin-right: 6px;">Terms &amp; Conditions</a> • -->
+        <a href="./staff.html" style="color: var(--text-muted); text-decoration: underline; margin-left: 6px;">Staff
+          Portal</a>
       </p>
     </footer>
 
   </div>
 
   <!-- Terms & Conditions Modal Dialog -->
-  <div id="terms-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
+  <div id="terms-modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="terms-modal-title">
     <div class="modal-container">
       <div class="modal-header">
         <h3 id="terms-modal-title" class="modal-title">
           <span>📜</span> Terms &amp; Conditions
         </h3>
-        <button id="terms-modal-close-btn" class="modal-close-btn" aria-label="Close Terms and Conditions">&times;</button>
+        <button id="terms-modal-close-btn" class="modal-close-btn"
+          aria-label="Close Terms and Conditions">&times;</button>
       </div>
       <div class="modal-body">
-        <div style="text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle);">
-          <div style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light); font-weight: 600;">The Bunny Loyalty Club</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">The Bunny Luxury Hair &amp; Beauty Studio • Last Updated: September 2026</div>
+        <div
+          style="text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle);">
+          <div style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light); font-weight: 600;">The
+            Bunny Loyalty Club</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">The Bunny Luxury Hair &amp; Beauty
+            Studio • Last Updated: September 2026</div>
         </div>
 
-        <p>By joining and using The Bunny Loyalty Club, you agree to the following Terms &amp; Conditions. Please read these terms carefully before participating in the loyalty program.</p>
+        <p>By joining and using The Bunny Loyalty Club, you agree to the following Terms &amp; Conditions. Please read
+          these terms carefully before participating in the loyalty program.</p>
 
         <h4>1. About the Loyalty Program</h4>
-        <p>The Bunny Loyalty Club is a customer loyalty and rewards program operated by <strong>The Bunny Luxury Hair &amp; Beauty Studio</strong>. The program allows eligible customers to collect loyalty stamps for qualifying salon visits and unlock a complimentary eligible salon service/package after completing the required number of qualifying visits. The program is intended to reward genuine and regular customers of the salon.</p>
+        <p>The Bunny Loyalty Club is a customer loyalty and rewards program operated by <strong>The Bunny Luxury Hair
+            &amp; Beauty Studio</strong>. The program allows eligible customers to collect loyalty stamps for qualifying
+          salon visits and unlock a complimentary eligible salon service/package after completing the required number of
+          qualifying visits. The program is intended to reward genuine and regular customers of the salon.</p>
 
         <h4>2. How the Loyalty Program Works</h4>
-        <p>Eligible customers can collect up to <strong>10 loyalty stamps in one reward cycle</strong>. A customer becomes eligible for the reward after successfully completing <strong>10 qualifying visits</strong>. After the 10th qualifying visit is approved, the customer will receive one loyalty reward with a stated value of <strong>up to ₹3,000</strong>, subject to these Terms &amp; Conditions and the salon's eligible reward menu. After the reward is successfully redeemed, the customer's loyalty cycle will restart from 0.</p>
+        <p>Eligible customers can collect up to <strong>10 loyalty stamps in one reward cycle</strong>. A customer
+          becomes eligible for the reward after successfully completing <strong>10 qualifying visits</strong>. After the
+          10th qualifying visit is approved, the customer will receive one loyalty reward with a stated value of
+          <strong>up to ₹3,000</strong>, subject to these Terms &amp; Conditions and the salon's eligible reward menu.
+          After the reward is successfully redeemed, the customer's loyalty cycle will restart from 0.</p>
 
         <h4>3. Qualifying Visit</h4>
         <p>A loyalty stamp is issued only for a genuine, completed and paid salon visit. To qualify for one stamp:</p>
         <ul>
-          <li>The customer's final eligible bill must meet the salon's minimum qualifying spend (currently <strong>₹600 per visit</strong>, unless otherwise displayed).</li>
+          <li>The customer's final eligible bill must meet the salon's minimum qualifying spend (currently <strong>₹600
+              per visit</strong>, unless otherwise displayed).</li>
           <li>The transaction must be genuine and actually paid for.</li>
           <li>The customer must receive an eligible salon service.</li>
           <li>The visit must be verified through the salon's loyalty system.</li>
@@ -220,40 +236,57 @@
         </ul>
 
         <h4>4. One Stamp Per Visit</h4>
-        <p>Only <strong>one loyalty stamp can be earned from one qualifying visit</strong>, regardless of the amount spent. (e.g. ₹600 → 1 stamp; ₹2,000 → 1 stamp; ₹5,000 → 1 stamp).</p>
+        <p>Only <strong>one loyalty stamp can be earned from one qualifying visit</strong>, regardless of the amount
+          spent. (e.g. ₹600 → 1 stamp; ₹2,000 → 1 stamp; ₹5,000 → 1 stamp).</p>
 
         <h4>5. Same-Day Transactions</h4>
-        <p>A customer cannot obtain multiple loyalty stamps by splitting transactions or making multiple purchases on the same day. Multiple bills created for the purpose of obtaining additional stamps may be treated as one qualifying visit.</p>
+        <p>A customer cannot obtain multiple loyalty stamps by splitting transactions or making multiple purchases on
+          the same day. Multiple bills created for the purpose of obtaining additional stamps may be treated as one
+          qualifying visit.</p>
 
         <h4>6. Genuine Visits Only</h4>
-        <p>Loyalty stamps are intended only for genuine visits to the salon. Prohibited activities include fake visits, fake transactions, repeated QR scanning without a genuine salon visit, manipulating browser storage/website, duplicate accounts, bot scripts, or exploiting technical bugs.</p>
+        <p>Loyalty stamps are intended only for genuine visits to the salon. Prohibited activities include fake visits,
+          fake transactions, repeated QR scanning without a genuine salon visit, manipulating browser storage/website,
+          duplicate accounts, bot scripts, or exploiting technical bugs.</p>
 
         <h4>7. QR Code Usage</h4>
-        <p>The salon's QR code is provided only as an access method. Scanning does not automatically guarantee a stamp; visits require confirmation/approval by the salon team. Scanning photos of QR codes outside the salon does not qualify.</p>
+        <p>The salon's QR code is provided only as an access method. Scanning does not automatically guarantee a stamp;
+          visits require confirmation/approval by the salon team. Scanning photos of QR codes outside the salon does not
+          qualify.</p>
 
         <h4>8. Loyalty Account &amp; 9. Mobile Number</h4>
-        <p>Customers must provide accurate personal information. Mobile numbers are used to identify accounts, maintain records, and assist with account recovery. Do not share credentials or device sessions.</p>
+        <p>Customers must provide accurate personal information. Mobile numbers are used to identify accounts, maintain
+          records, and assist with account recovery. Do not share credentials or device sessions.</p>
 
         <h4>10. Loyalty Stamp Verification</h4>
-        <p>A stamp is considered valid only when successfully recorded in the salon's official loyalty system. Screenshots or manually altered images do not constitute proof.</p>
+        <p>A stamp is considered valid only when successfully recorded in the salon's official loyalty system.
+          Screenshots or manually altered images do not constitute proof.</p>
 
         <h4>11. ₹3,000 Reward &amp; 12. Eligible Reward Services</h4>
-        <p>After completing 10 valid qualifying visits, the customer unlocks a complimentary salon service/package with a stated retail/service value of <strong>up to ₹3,000</strong>. The reward is a service benefit only, non-cash, non-refundable, non-transferable, and valid only on eligible services designated by the salon.</p>
+        <p>After completing 10 valid qualifying visits, the customer unlocks a complimentary salon service/package with
+          a stated retail/service value of <strong>up to ₹3,000</strong>. The reward is a service benefit only,
+          non-cash, non-refundable, non-transferable, and valid only on eligible services designated by the salon.</p>
 
         <h4>14. Reward Expiry</h4>
-        <p>Each unlocked reward is valid for <strong>30 days from the date it is issued</strong>, unless another period is displayed.</p>
+        <p>Each unlocked reward is valid for <strong>30 days from the date it is issued</strong>, unless another period
+          is displayed.</p>
 
         <h4>15. No Cash Alternative &amp; 16. No Combining Offers</h4>
-        <p>Rewards cannot be converted to cash or combined with other promotional offers or discount coupons unless expressly authorized.</p>
+        <p>Rewards cannot be converted to cash or combined with other promotional offers or discount coupons unless
+          expressly authorized.</p>
 
         <h4>17. Additional Charges &amp; 18. Reward Redemption</h4>
-        <p>If a chosen service upgrade exceeds the covered ₹3,000 amount, the difference must be paid. Rewards must be presented to staff and show as 'Available' in the system.</p>
+        <p>If a chosen service upgrade exceeds the covered ₹3,000 amount, the difference must be paid. Rewards must be
+          presented to staff and show as 'Available' in the system.</p>
 
         <h4>19. Fraud and Abuse &amp; 20. Technical Errors</h4>
-        <p>The salon reserves the right to reject suspicious visits, suspend accounts, and rectify unintended technical errors.</p>
+        <p>The salon reserves the right to reject suspicious visits, suspend accounts, and rectify unintended technical
+          errors.</p>
 
-        <div style="background: rgba(223, 158, 142, 0.12); border: 1px solid rgba(223, 158, 142, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-top: 16px; font-size: 12px;">
-          <strong style="color: var(--rose-gold);">⚠️ Notice:</strong> Full 30-section terms and detailed policies are available on our dedicated Terms page.
+        <div
+          style="background: rgba(223, 158, 142, 0.12); border: 1px solid rgba(223, 158, 142, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-top: 16px; font-size: 12px;">
+          <strong style="color: var(--rose-gold);">⚠️ Notice:</strong> Full 30-section terms and detailed policies are
+          available on our dedicated Terms page.
         </div>
       </div>
       <div class="modal-footer">
@@ -278,4 +311,5 @@
   <!-- App Script -->
   <script type="module" src="./app.js"></script>
 </body>
+
 </html>
