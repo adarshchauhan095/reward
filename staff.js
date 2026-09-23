@@ -54,12 +54,33 @@ const rewardsQueue = document.getElementById('rewards-queue');
 const approvedVisitsTableBody = document.getElementById('approved-visits-table-body');
 const toastContainer = document.getElementById('toast-container');
 
+// Dynamic Branding Elements
+const staffBrandIcon = document.getElementById('staff-brand-icon');
+const staffBrandTitle = document.getElementById('staff-brand-title');
+const staffBrandTagline = document.getElementById('staff-brand-tagline');
+const rewardsSectionTitle = document.getElementById('rewards-section-title');
+
 // State
 let currentStaff = null;
 let pendingUnsubscribe = null;
 let rewardsUnsubscribe = null;
 let approvedUnsubscribe = null;
+let settingsUnsubscribe = null;
 let processingAction = false;
+let programConfig = {
+  businessName: 'The Bunny',
+  businessCategory: 'Hair & Beauty Salon',
+  businessTagline: 'Luxury Hair & Beauty Studio',
+  brandIcon: '🐰',
+  currencySymbol: '₹',
+  targetStamps: 10,
+  minSpend: 600,
+  stampIcon: '★',
+  vipIcon: '👑',
+  rewardTitle: 'Complimentary Hair & Beauty Service',
+  rewardValue: 3000,
+  rewardExpiryDays: 60
+};
 
 // ----------------------------------------------------
 // UI Notification Helpers
@@ -181,8 +202,10 @@ async function approveVisit(visitId, customerId, buttonElement) {
       const customerData = customerSnap.data();
       const currentStamp = Number(customerData.stampCount || 0);
 
-      if (currentStamp >= 10) {
-        throw new Error('Customer has reached 10 stamps. Please redeem the ₹3,000 reward before awarding new stamps.');
+      const targetStamps = Number(programConfig.targetStamps || 10);
+
+      if (currentStamp >= targetStamps) {
+        throw new Error(`Customer has reached ${targetStamps} stamps. Please redeem the reward before awarding new stamps.`);
       }
 
       const nextStamp = currentStamp + 1;
@@ -197,14 +220,14 @@ async function approveVisit(visitId, customerId, buttonElement) {
         approvedBy: auth.currentUser.uid
       });
 
-      // 2. If 10th stamp reached -> Create Reward Document & Update Customer
-      if (nextStamp === 10) {
+      // 2. If target stamp reached -> Create Reward Document & Update Customer
+      if (nextStamp === targetStamps) {
         const rewardRef = doc(collection(db, 'rewards'));
         transaction.set(rewardRef, {
           customerId: customerId,
           cycleNumber: currentCycle,
-          type: 'complimentary_service',
-          value: 3000,
+          type: programConfig.rewardTitle || 'complimentary_service',
+          value: Number(programConfig.rewardValue || 3000),
           status: 'available',
           createdAt: serverTimestamp(),
           redeemedAt: null,
@@ -212,7 +235,7 @@ async function approveVisit(visitId, customerId, buttonElement) {
         });
 
         transaction.update(customerRef, {
-          stampCount: 10,
+          stampCount: targetStamps,
           rewardAvailable: true,
           totalVisits: (customerData.totalVisits || 0) + 1,
           lastVisitAt: serverTimestamp(),
@@ -297,7 +320,9 @@ async function redeemReward(rewardId, customerId, buttonElement) {
     return;
   }
 
-  if (!confirm('Confirm redemption of ₹3,000 complimentary beauty service? This will complete the current cycle and start a fresh cycle.')) {
+  const currSym = programConfig.currencySymbol || '₹';
+  const rVal = Number(programConfig.rewardValue || 3000);
+  if (!confirm(`Confirm redemption of ${currSym}${rVal.toLocaleString('en-IN')} complimentary reward? This will complete the current cycle and start a fresh cycle.`)) {
     return;
   }
 
@@ -421,7 +446,8 @@ function initPendingQueue() {
       const metaDiv = document.createElement('div');
       metaDiv.className = 'queue-customer-meta';
       const timeStr = visit.createdAt?.toDate ? visit.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
-      metaDiv.textContent = `📱 ${customerPhone} • Requested: ${timeStr} • Current: ${currentStamps}/10 (Will award #${currentStamps + 1})`;
+      const targetStamps = Number(programConfig.targetStamps || 10);
+      metaDiv.textContent = `📱 ${customerPhone} • Requested: ${timeStr} • Current: ${currentStamps}/${targetStamps} (Will award #${currentStamps + 1})`;
 
       infoDiv.appendChild(nameH);
       infoDiv.appendChild(metaDiv);
@@ -511,9 +537,12 @@ function initRewardsQueue() {
       nameH.className = 'queue-customer-name';
       nameH.textContent = `👑 ${customerName}`; // Safe textContent
 
+      const currSym = programConfig.currencySymbol || '₹';
+      const rVal = Number(reward.value || programConfig.rewardValue || 3000);
+
       const metaDiv = document.createElement('div');
       metaDiv.className = 'queue-customer-meta';
-      metaDiv.textContent = `📱 ${customerPhone} • Cycle #${reward.cycleNumber || 1} • Reward Value: ₹${reward.value || 3000}`;
+      metaDiv.textContent = `📱 ${customerPhone} • Cycle #${reward.cycleNumber || 1} • Reward Value: ${currSym}${rVal.toLocaleString('en-IN')}`;
 
       infoDiv.appendChild(nameH);
       infoDiv.appendChild(metaDiv);
@@ -523,7 +552,7 @@ function initRewardsQueue() {
 
       const redeemBtn = document.createElement('button');
       redeemBtn.className = 'btn btn-primary';
-      redeemBtn.textContent = 'Redeem ₹3,000 Reward';
+      redeemBtn.textContent = `Redeem ${currSym}${rVal.toLocaleString('en-IN')} Reward`;
       redeemBtn.addEventListener('click', () => redeemReward(reward.id, reward.customerId, redeemBtn));
 
       actionsDiv.appendChild(redeemBtn);
@@ -629,6 +658,28 @@ function initApprovedVisitsLog() {
 }
 
 // ----------------------------------------------------
+// Settings Stream (Universal SaaS Configuration)
+// ----------------------------------------------------
+function initSettingsStream() {
+  const settingsRef = doc(db, 'settings', 'program_config');
+  settingsUnsubscribe = onSnapshot(settingsRef, (docSnap) => {
+    if (docSnap.exists()) {
+      programConfig = { ...programConfig, ...docSnap.data() };
+      if (staffBrandIcon) staffBrandIcon.textContent = programConfig.brandIcon || '🐰';
+      if (staffBrandTitle) staffBrandTitle.textContent = `${programConfig.businessName || 'The Bunny'} Staff Portal`;
+      if (staffBrandTagline) staffBrandTagline.textContent = programConfig.businessTagline || 'Verification Console';
+      if (rewardsSectionTitle) {
+        const currSym = programConfig.currencySymbol || '₹';
+        const rVal = Number(programConfig.rewardValue || 3000);
+        rewardsSectionTitle.textContent = `${currSym}${rVal.toLocaleString('en-IN')} Rewards Awaiting Redemption`;
+      }
+    }
+  }, (err) => {
+    console.error('Settings stream error:', err);
+  });
+}
+
+// ----------------------------------------------------
 // Main Initialization & Auth State
 // ----------------------------------------------------
 function initStaffApp() {
@@ -641,6 +692,7 @@ function initStaffApp() {
     // Treat unauthenticated visitors or anonymous customer sessions as needing staff sign in
     if (!user || user.isAnonymous) {
       currentStaff = null;
+      if (settingsUnsubscribe) settingsUnsubscribe();
       navUserPanel.classList.add('hidden');
       loginView.classList.remove('hidden');
       unauthorizedView.classList.add('hidden');
@@ -685,6 +737,7 @@ function initStaffApp() {
       staffMainView.classList.remove('hidden');
 
       // Initialize real-time streams
+      initSettingsStream();
       initPendingQueue();
       initRewardsQueue();
       initApprovedVisitsLog();

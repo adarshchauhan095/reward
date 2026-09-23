@@ -30,10 +30,10 @@
 
     <!-- Brand Header -->
     <header class="brand-header">
-      <div class="brand-icon" aria-hidden="true">🐰</div>
-      <div class="studio-name">The Bunny</div>
-      <h1 class="club-title">Loyalty Club</h1>
-      <p class="offer-tagline">
+      <div id="app-brand-icon" class="brand-icon" aria-hidden="true">🐰</div>
+      <div id="app-studio-name" class="studio-name">The Bunny</div>
+      <h1 id="app-club-title" class="club-title">Loyalty Club</h1>
+      <p id="app-offer-tagline" class="offer-tagline">
         Visit 10 times and unlock a complimentary service worth <strong>₹3,000</strong>.
       </p>
     </header>
@@ -122,6 +122,9 @@
         </div>
       </div>
 
+      <!-- Repeat Visit Streak Banner -->
+      <div id="streak-banner" class="streak-banner hidden"></div>
+
       <!-- Dynamic Visit Status Card -->
       <div id="status-box" class="status-card hidden">
         <div id="status-icon" class="status-icon">⏳</div>
@@ -138,7 +141,7 @@
         </button>
       </div>
 
-      <!-- Reward Voucher Card (Shown when 10th visit reached) -->
+      <!-- Reward Voucher Card (Shown when target visit milestone reached) -->
       <div id="reward-voucher" class="luxury-card mt-4 hidden"
         style="background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.25), rgba(18, 20, 28, 0.95)); border: 1px solid var(--gold-primary);">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -147,15 +150,23 @@
             Voucher</span>
           <span style="font-size: 18px;">👑</span>
         </div>
-        <div style="font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: #fff;">₹3,000
+        <div id="voucher-title" style="font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: #fff;">₹3,000
           Complimentary Service</div>
-        <p style="font-size: 12px; color: var(--text-sub); margin-top: 4px;">
-          Present this screen to your salon specialist to redeem your complimentary hair or beauty service.
+        <p id="voucher-desc" style="font-size: 12px; color: var(--text-sub); margin-top: 4px;">
+          Present this screen to your specialist to redeem your complimentary reward.
         </p>
         <div
           style="margin-top: 12px; padding: 6px 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); border-radius: var(--radius-sm); font-size: 12px; color: #6ee7b7; font-weight: 600; text-align: center;">
           ✓ Ready for Staff Redemption
         </div>
+      </div>
+
+      <!-- WhatsApp 1-Tap Referral Share -->
+      <div id="referral-container" class="mt-4">
+        <a id="whatsapp-share-btn" href="#" target="_blank" rel="noopener" class="whatsapp-referral-btn">
+          <span style="font-size: 18px;">💬</span>
+          <span>Share VIP Invite on WhatsApp</span>
+        </a>
       </div>
 
       <!-- History Accordion -->
@@ -179,8 +190,7 @@
     <!-- Footer Links -->
     <footer class="text-center" style="margin-top: 16px;">
       <p style="font-size: 11px; color: var(--text-muted); line-height: 1.8;">
-        The Bunny Luxury Hair &amp; Beauty Studio &copy; 2026<br>
-        <!-- <a href="./terms.html" class="terms-link terms-open-btn" target="_blank" rel="noopener" style="font-size: 11px; margin-right: 6px;">Terms &amp; Conditions</a> • -->
+        <span id="footer-business-name">The Bunny Luxury Hair &amp; Beauty Studio</span> &copy; 2026<br>
         <a href="./staff.html" style="color: var(--text-muted); text-decoration: underline; margin-left: 6px;">Staff
           Portal</a>
       </p>

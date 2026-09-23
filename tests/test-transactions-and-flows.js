@@ -356,4 +356,146 @@ await executeApprovalTransaction(deviceBVisitId, staffMemberUid);
 assert.strictEqual(db.customers.get(deviceAUid).stampCount, 3, 'Stamp count progresses to 3 after staff approval');
 console.log('  ✓ Multi-device login with same phone successfully retains existing stamps and advances progression');
 
+// 12. Test: Universal Multi-Business Configuration (e.g. Cafe with 5 target stamps & ₹500 reward)
+console.log('Test 12: Universal Multi-Business Configuration (Dynamic Milestones)');
+const cafeConfig = {
+  businessName: 'The Artisan Cafe',
+  businessCategory: 'Cafe & Roastery',
+  targetStamps: 5,
+  rewardTitle: 'Complimentary Artisanal Roast & Pastry Combo',
+  rewardValue: 500,
+  currencySymbol: '₹'
+};
+
+async function executeConfigurableApproval(visitId, approverUid, config) {
+  const staff = db.staff.get(approverUid);
+  if (!staff || !staff.active) throw new Error('Unauthorized');
+  const visit = db.visits.get(visitId);
+  const customer = db.customers.get(visit.customerId);
+  const target = config.targetStamps || 10;
+
+  if (customer.stampCount >= target) {
+    throw new Error(`Customer already has reached target of ${target} stamps.`);
+  }
+
+  const nextStamp = customer.stampCount + 1;
+  visit.status = 'approved';
+  visit.stampNumber = nextStamp;
+  visit.approvedBy = approverUid;
+
+  if (nextStamp === target) {
+    const rewardId = `reward_dyn_${Date.now()}`;
+    db.rewards.set(rewardId, {
+      customerId: visit.customerId,
+      cycleNumber: customer.cycleNumber,
+      type: config.rewardTitle,
+      value: config.rewardValue,
+      status: 'available',
+      createdAt: new Date()
+    });
+    customer.stampCount = target;
+    customer.rewardAvailable = true;
+    return rewardId;
+  } else {
+    customer.stampCount = nextStamp;
+    return null;
+  }
+}
+
+const cafeCustId = 'cust_cafe_001';
+db.customers.set(cafeCustId, {
+  name: 'Devansh Roy',
+  phone: '9812345678',
+  stampCount: 4,
+  cycleNumber: 1,
+  totalVisits: 4,
+  totalRewards: 0,
+  rewardAvailable: false
+});
+
+const cafeVisitId = 'visit_cafe_005';
+db.visits.set(cafeVisitId, {
+  customerId: cafeCustId,
+  cycleNumber: 1,
+  stampNumber: 0,
+  status: 'pending',
+  createdAt: new Date()
+});
+
+const cafeRewardId = await executeConfigurableApproval(cafeVisitId, staffMemberUid, cafeConfig);
+assert.ok(cafeRewardId, '5th stamp triggers custom cafe reward');
+const cafeReward = db.rewards.get(cafeRewardId);
+assert.strictEqual(cafeReward.value, 500, 'Custom reward value of ₹500 awarded');
+assert.strictEqual(cafeReward.type, 'Complimentary Artisanal Roast & Pastry Combo');
+assert.strictEqual(db.customers.get(cafeCustId).stampCount, 5, 'Stamp count capped at target of 5');
+console.log('  ✓ Dynamic target stamps and custom reward values operate seamlessly');
+
+// 13. Test: Danger Zone - Individual Customer Stamp Reset
+console.log('Test 13: Danger Zone - Individual Customer Stamp Reset');
+function executeAdminCustomerReset(customerId, newStamps, targetStamps) {
+  const customer = db.customers.get(customerId);
+  if (!customer) throw new Error('Customer not found');
+  customer.stampCount = newStamps;
+  customer.rewardAvailable = (newStamps >= targetStamps);
+  customer.updatedAt = new Date();
+}
+
+executeAdminCustomerReset(cafeCustId, 1, cafeConfig.targetStamps);
+assert.strictEqual(db.customers.get(cafeCustId).stampCount, 1, 'Admin reset customer stamps to 1');
+assert.strictEqual(db.customers.get(cafeCustId).rewardAvailable, false, 'Reward availability cleared');
+console.log('  ✓ Admin can safely adjust/reset individual customer stamp counts');
+
+// 14. Test: Danger Zone - Purge Completed History
+console.log('Test 14: Danger Zone - Purge Completed History');
+function executePurgeCompletedHistory() {
+  let purgedCount = 0;
+  for (const [id, visit] of db.visits.entries()) {
+    if (visit.status === 'approved' || visit.status === 'rejected') {
+      db.visits.delete(id);
+      purgedCount++;
+    }
+  }
+  for (const [id, reward] of db.rewards.entries()) {
+    if (reward.status === 'redeemed') {
+      db.rewards.delete(id);
+      purgedCount++;
+    }
+  }
+  return purgedCount;
+}
+
+const purged = executePurgeCompletedHistory();
+assert.ok(purged > 0, 'Purged historical approved visits and redeemed rewards');
+for (const visit of db.visits.values()) {
+  assert.strictEqual(visit.status, 'pending', 'Only active pending visits remain after purge');
+}
+console.log('  ✓ Completed history purged while preserving active state');
+
+// 15. Test: Danger Zone - Master Factory Reset
+console.log('Test 15: Danger Zone - Master Factory Reset');
+function executeMasterFactoryReset(confirmText) {
+  if (confirmText !== 'RESET') throw new Error('Confirmation keyword mismatch');
+  for (const customer of db.customers.values()) {
+    customer.stampCount = 0;
+    customer.cycleNumber = 1;
+    customer.totalVisits = 0;
+    customer.totalRewards = 0;
+    customer.rewardAvailable = false;
+    customer.lastVisitAt = null;
+  }
+  db.visits.clear();
+  db.rewards.clear();
+  if (db.phoneIndex) db.phoneIndex.clear();
+}
+
+executeMasterFactoryReset('RESET');
+assert.strictEqual(db.visits.size, 0, 'All visits wiped');
+assert.strictEqual(db.rewards.size, 0, 'All rewards wiped');
+assert.strictEqual(db.phoneIndex.size, 0, 'All phone mappings wiped');
+for (const customer of db.customers.values()) {
+  assert.strictEqual(customer.stampCount, 0, 'Customer stamp reset to 0');
+  assert.strictEqual(customer.cycleNumber, 1, 'Cycle reset to 1');
+}
+console.log('  ✓ Master factory reset completed cleanly with total data wipe');
+
 console.log('\n--- ALL TRANSACTION & END-TO-END FLOW TESTS PASSED! ---');

@@ -137,8 +137,10 @@
       <section class="luxury-card">
         <div class="tab-nav">
           <button class="tab-btn active" data-tab="customers-tab">Customer Roster</button>
+          <button class="tab-btn" data-tab="settings-tab">⚙️ Program Settings</button>
           <button class="tab-btn" data-tab="staff-tab">Staff Access Management</button>
           <button class="tab-btn" data-tab="history-tab">Visit & Reward Audit Logs</button>
+          <button class="tab-btn" data-tab="danger-tab" style="color: #fca5a5;">⚠️ Danger Zone</button>
         </div>
 
         <!-- Tab 1: Customers -->
@@ -159,18 +161,129 @@
                   <th>Total Visits</th>
                   <th>Total Rewards</th>
                   <th>Enrolled Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="customers-table-body">
                 <tr>
-                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading customer roster...</td>
+                  <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading customer roster...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Tab 2: Staff Management -->
+        <!-- Tab 2: Universal SaaS Program Settings -->
+        <div id="settings-tab" class="tab-content hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light);">Universal Loyalty Program Engine</h3>
+              <p style="font-size: 12px; color: var(--text-sub);">Configure brand identity, dynamic reward values, and viral retention rules.</p>
+            </div>
+            <button type="submit" form="program-settings-form" id="save-settings-btn" class="btn btn-primary" style="padding: 10px 20px;">
+              💾 Save Program Configuration
+            </button>
+          </div>
+
+          <form id="program-settings-form">
+            <div class="settings-grid">
+              
+              <!-- 1. Brand & Business Identity -->
+              <div class="settings-section-card">
+                <div class="settings-section-title">
+                  <span>🏢</span> Business Profile
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-business-name">Business / Brand Name</label>
+                  <input type="text" id="cfg-business-name" class="form-input" required placeholder="e.g. The Bunny">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-business-category">Business Category</label>
+                  <input type="text" id="cfg-business-category" class="form-input" required placeholder="e.g. Salon, Cafe, Gym, Car Wash, Clinic">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-business-tagline">Tagline / Subheading</label>
+                  <input type="text" id="cfg-business-tagline" class="form-input" placeholder="e.g. Luxury Hair & Beauty Studio">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" for="cfg-brand-icon">Brand Icon / Emoji</label>
+                    <input type="text" id="cfg-brand-icon" class="form-input" maxlength="4" placeholder="🐰">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" for="cfg-currency-symbol">Currency Symbol</label>
+                    <input type="text" id="cfg-currency-symbol" class="form-input" maxlength="4" placeholder="₹">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Stamp Card Rules -->
+              <div class="settings-section-card">
+                <div class="settings-section-title">
+                  <span>🎫</span> Loyalty Card Architecture
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-target-stamps">Target Stamps (Milestone)</label>
+                  <input type="number" id="cfg-target-stamps" class="form-input" min="3" max="20" required value="10">
+                  <span style="font-size: 11px; color: var(--text-muted);">Number of stamps required to earn complimentary reward (3 to 20)</span>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-min-spend">Minimum Spend Per Stamp</label>
+                  <input type="number" id="cfg-min-spend" class="form-input" min="0" required value="600">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" for="cfg-stamp-icon">Stamp Icon</label>
+                    <input type="text" id="cfg-stamp-icon" class="form-input" maxlength="4" placeholder="★">
+                  </div>
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label" for="cfg-vip-icon">VIP Reward Icon</label>
+                    <input type="text" id="cfg-vip-icon" class="form-input" maxlength="4" placeholder="👑">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Reward Offer & Value -->
+              <div class="settings-section-card">
+                <div class="settings-section-title">
+                  <span>🎁</span> Reward & Complementary Offer
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-reward-title">Reward Title</label>
+                  <input type="text" id="cfg-reward-title" class="form-input" required placeholder="e.g. Complimentary Hair & Beauty Service">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-reward-value">Monetary Reward Value</label>
+                  <input type="number" id="cfg-reward-value" class="form-input" min="1" required value="3000">
+                  <span style="font-size: 11px; color: var(--text-muted);">Nominal service/product price (e.g. 500, 3000, 10000)</span>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-reward-expiry">Voucher Validity (Days)</label>
+                  <input type="number" id="cfg-reward-expiry" class="form-input" min="7" max="365" value="60">
+                </div>
+              </div>
+
+              <!-- 4. Sales Growth Boosters -->
+              <div class="settings-section-card">
+                <div class="settings-section-title">
+                  <span>🚀</span> Viral Sales Growth Boosters
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-referral-message">WhatsApp Referral Message</label>
+                  <textarea id="cfg-referral-message" class="form-input" rows="3" placeholder="Hey! Join the exclusive VIP Club with me and earn rewards on every visit! Check your loyalty card here: "></textarea>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" for="cfg-streak-days">Repeat Visit Streak Window (Days)</label>
+                  <input type="number" id="cfg-streak-days" class="form-input" min="0" max="90" value="14">
+                  <span style="font-size: 11px; color: var(--text-muted);">Customer is encouraged to revisit within this window for bonus rewards</span>
+                </div>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab 3: Staff Management -->
         <div id="staff-tab" class="tab-content hidden">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <div>
@@ -223,7 +336,7 @@
           </div>
         </div>
 
-        <!-- Tab 3: History & Audit -->
+        <!-- Tab 4: History & Audit -->
         <div id="history-tab" class="tab-content hidden">
           <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--gold-light); margin-bottom: 14px;">Historical Visit Logs</h3>
           <div class="table-responsive">
@@ -245,6 +358,76 @@
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Tab 5: Danger Zone -->
+        <div id="danger-tab" class="tab-content hidden">
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 style="font-family: var(--font-serif); font-size: 18px; color: #fca5a5;">Super-Admin Danger Zone</h3>
+              <span class="danger-badge">Destructive Actions</span>
+            </div>
+            <p style="font-size: 12px; color: var(--text-sub); margin-top: 4px;">
+              These administrative operations permanently modify or delete live loyalty data. Proceed with caution.
+            </p>
+          </div>
+
+          <!-- Danger Action 1: Individual Customer Stamp Reset -->
+          <div class="danger-card">
+            <div class="danger-card-title">
+              <span>👤</span> Reset Individual Customer Stamps
+            </div>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 14px;">
+              Adjust or reset an individual customer's stamps, cycle number, or reward availability to resolve support disputes.
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: flex-end;">
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="reset-target-customer">Select Customer</label>
+                <select id="reset-target-customer" class="form-input">
+                  <option value="">-- Select Customer --</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="reset-new-stamps">New Stamp Count</label>
+                <input type="number" id="reset-new-stamps" class="form-input" min="0" max="20" value="0">
+              </div>
+              <button id="execute-customer-reset-btn" class="btn btn-danger" style="height: 46px;">
+                Reset Customer Stamps
+              </button>
+            </div>
+          </div>
+
+          <!-- Danger Action 2: Purge Completed History -->
+          <div class="danger-card">
+            <div class="danger-card-title">
+              <span>🧹</span> Purge Completed Visit & Reward History
+            </div>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 14px;">
+              Permanently delete all approved/rejected visits and redeemed rewards across all customers. Active customer profiles, current pending requests, and unredeemed rewards will remain intact.
+            </p>
+            <button id="purge-history-btn" class="btn btn-danger" style="padding: 10px 20px;">
+              Purge Completed History Logs
+            </button>
+          </div>
+
+          <!-- Danger Action 3: Master Factory Reset -->
+          <div class="danger-card" style="border: 2px solid var(--crimson); background: rgba(239, 68, 68, 0.08);">
+            <div class="danger-card-title" style="color: #ef4444; font-size: 16px;">
+              <span>💥</span> Master Factory Reset (Total Data Wipe)
+            </div>
+            <p style="font-size: 13px; color: #fca5a5; margin-bottom: 14px; line-height: 1.5;">
+              <strong>WARNING:</strong> This action will reset every customer's stamps to 0, cycle to 1, wipe all visits and rewards history, and clear all phone index mappings. This action CANNOT be undone.
+            </p>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 240px;">
+                <input type="text" id="factory-reset-confirm-input" class="form-input" placeholder="Type RESET in uppercase to confirm" style="border-color: rgba(239, 68, 68, 0.5);">
+              </div>
+              <button id="factory-reset-btn" class="btn btn-danger" disabled style="padding: 12px 24px; font-weight: 700; opacity: 0.5;">
+                🔥 Execute Master Factory Reset
+              </button>
+            </div>
+          </div>
+
         </div>
 
       </section>

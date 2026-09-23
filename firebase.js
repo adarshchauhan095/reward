@@ -24,7 +24,9 @@ import {
   onSnapshot, 
   runTransaction, 
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  getDocs,
+  writeBatch
 } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js';
 
 export const firebaseConfig = {
@@ -50,9 +52,11 @@ export {
   onAuthStateChanged,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   deleteDoc,
+  writeBatch,
   collection,
   query,
   where,

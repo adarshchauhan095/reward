@@ -11,14 +11,18 @@ import {
   onAuthStateChanged,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
+  writeBatch,
   collection,
   query,
   where,
   orderBy,
   limit,
   onSnapshot,
+  serverTimestamp,
   formatErrorMessage,
   isOnline
 } from './firebase.js';
@@ -53,6 +57,32 @@ const tabContents = document.querySelectorAll('.tab-content');
 const customerSearchInput = document.getElementById('customer-search-input');
 const customersTableBody = document.getElementById('customers-table-body');
 
+// Universal SaaS Settings Elements
+const programSettingsForm = document.getElementById('program-settings-form');
+const saveSettingsBtn = document.getElementById('save-settings-btn');
+const cfgBusinessName = document.getElementById('cfg-business-name');
+const cfgBusinessCategory = document.getElementById('cfg-business-category');
+const cfgBusinessTagline = document.getElementById('cfg-business-tagline');
+const cfgBrandIcon = document.getElementById('cfg-brand-icon');
+const cfgCurrencySymbol = document.getElementById('cfg-currency-symbol');
+const cfgTargetStamps = document.getElementById('cfg-target-stamps');
+const cfgMinSpend = document.getElementById('cfg-min-spend');
+const cfgStampIcon = document.getElementById('cfg-stamp-icon');
+const cfgVipIcon = document.getElementById('cfg-vip-icon');
+const cfgRewardTitle = document.getElementById('cfg-reward-title');
+const cfgRewardValue = document.getElementById('cfg-reward-value');
+const cfgRewardExpiry = document.getElementById('cfg-reward-expiry');
+const cfgReferralMessage = document.getElementById('cfg-referral-message');
+const cfgStreakDays = document.getElementById('cfg-streak-days');
+
+// Danger Zone Elements
+const resetTargetCustomer = document.getElementById('reset-target-customer');
+const resetNewStamps = document.getElementById('reset-new-stamps');
+const executeCustomerResetBtn = document.getElementById('execute-customer-reset-btn');
+const purgeHistoryBtn = document.getElementById('purge-history-btn');
+const factoryResetConfirmInput = document.getElementById('factory-reset-confirm-input');
+const factoryResetBtn = document.getElementById('factory-reset-btn');
+
 // Staff Tab
 const addStaffToggleBtn = document.getElementById('add-staff-toggle-btn');
 const addStaffPanel = document.getElementById('add-staff-panel');
@@ -72,6 +102,22 @@ let currentAdmin = null;
 let customersCache = [];
 let staffCache = [];
 let isProcessing = false;
+let programConfig = {
+  businessName: 'The Bunny',
+  businessCategory: 'Hair & Beauty Salon',
+  businessTagline: 'Luxury Hair & Beauty Studio',
+  brandIcon: '🐰',
+  currencySymbol: '₹',
+  targetStamps: 10,
+  minSpend: 600,
+  stampIcon: '★',
+  vipIcon: '👑',
+  rewardTitle: 'Complimentary Hair & Beauty Service',
+  rewardValue: 3000,
+  rewardExpiryDays: 60,
+  referralMessage: 'Hey! Join the exclusive VIP Club at The Bunny with me and earn luxury rewards on every visit! Check your loyalty card here: ',
+  streakBonusDays: 14
+};
 
 // ----------------------------------------------------
 // UI Notification Helpers
@@ -193,8 +239,9 @@ function renderCustomersTable(customers) {
 
     const stampsTd = document.createElement('td');
     const sc = Number(c.stampCount || 0);
-    stampsTd.textContent = `${sc} / 10`;
-    stampsTd.style.color = sc >= 10 ? 'var(--emerald)' : 'var(--gold-light)';
+    const target = Number(programConfig.targetStamps || 10);
+    stampsTd.textContent = `${sc} / ${target}`;
+    stampsTd.style.color = sc >= target ? 'var(--emerald)' : 'var(--gold-light)';
     stampsTd.style.fontWeight = '700';
 
     const cycleTd = document.createElement('td');
@@ -209,6 +256,29 @@ function renderCustomersTable(customers) {
     const dateTd = document.createElement('td');
     dateTd.textContent = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString('en-IN') : 'N/A';
 
+    const actionTd = document.createElement('td');
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'btn btn-danger';
+    resetBtn.style.padding = '4px 8px';
+    resetBtn.style.fontSize = '11px';
+    resetBtn.textContent = 'Manage / Reset';
+    resetBtn.addEventListener('click', () => {
+      // Switch to Danger Zone tab and preselect this customer
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(cnt => cnt.classList.add('hidden'));
+
+      const dangerTabBtn = document.querySelector('[data-tab="danger-tab"]');
+      const dangerTab = document.getElementById('danger-tab');
+      if (dangerTabBtn) dangerTabBtn.classList.add('active');
+      if (dangerTab) dangerTab.classList.remove('hidden');
+
+      if (resetTargetCustomer) {
+        resetTargetCustomer.value = c.id;
+        resetTargetCustomer.focus();
+      }
+    });
+    actionTd.appendChild(resetBtn);
+
     tr.appendChild(nameTd);
     tr.appendChild(phoneTd);
     tr.appendChild(stampsTd);
@@ -216,9 +286,25 @@ function renderCustomersTable(customers) {
     tr.appendChild(visitsTd);
     tr.appendChild(rewardsTd);
     tr.appendChild(dateTd);
+    tr.appendChild(actionTd);
 
     customersTableBody.appendChild(tr);
   });
+
+  // Populate Danger Zone customer select
+  if (resetTargetCustomer) {
+    const currentVal = resetTargetCustomer.value;
+    resetTargetCustomer.innerHTML = '<option value="">-- Select Customer --</option>';
+    customers.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      const cName = c.name || 'Valued Guest';
+      const cPhone = c.phone || 'N/A';
+      opt.textContent = `${cName} (${cPhone}) - ${c.stampCount || 0} stamps`;
+      resetTargetCustomer.appendChild(opt);
+    });
+    if (currentVal) resetTargetCustomer.value = currentVal;
+  }
 }
 
 function filterCustomers() {
@@ -462,6 +548,280 @@ function initAuditLogs() {
 }
 
 // ----------------------------------------------------
+// Universal SaaS Program Settings Management
+// ----------------------------------------------------
+function populateSettingsForm(cfg) {
+  if (!cfg) return;
+  if (cfgBusinessName) cfgBusinessName.value = cfg.businessName || '';
+  if (cfgBusinessCategory) cfgBusinessCategory.value = cfg.businessCategory || '';
+  if (cfgBusinessTagline) cfgBusinessTagline.value = cfg.businessTagline || '';
+  if (cfgBrandIcon) cfgBrandIcon.value = cfg.brandIcon || '🐰';
+  if (cfgCurrencySymbol) cfgCurrencySymbol.value = cfg.currencySymbol || '₹';
+  if (cfgTargetStamps) cfgTargetStamps.value = cfg.targetStamps || 10;
+  if (cfgMinSpend) cfgMinSpend.value = cfg.minSpend || 600;
+  if (cfgStampIcon) cfgStampIcon.value = cfg.stampIcon || '★';
+  if (cfgVipIcon) cfgVipIcon.value = cfg.vipIcon || '👑';
+  if (cfgRewardTitle) cfgRewardTitle.value = cfg.rewardTitle || '';
+  if (cfgRewardValue) cfgRewardValue.value = cfg.rewardValue || 3000;
+  if (cfgRewardExpiry) cfgRewardExpiry.value = cfg.rewardExpiryDays || 60;
+  if (cfgReferralMessage) cfgReferralMessage.value = cfg.referralMessage || '';
+  if (cfgStreakDays) cfgStreakDays.value = cfg.streakBonusDays || 14;
+}
+
+async function handleSaveSettings(e) {
+  e.preventDefault();
+  if (!isOnline()) {
+    showToast("You're offline. Cannot save settings.", 'error');
+    return;
+  }
+
+  const targetStamps = parseInt(cfgTargetStamps.value, 10);
+  if (isNaN(targetStamps) || targetStamps < 3 || targetStamps > 20) {
+    showToast('Target stamps must be between 3 and 20.', 'error');
+    return;
+  }
+
+  const rewardValue = parseInt(cfgRewardValue.value, 10);
+  if (isNaN(rewardValue) || rewardValue <= 0) {
+    showToast('Reward value must be a positive number.', 'error');
+    return;
+  }
+
+  const updatedConfig = {
+    businessName: cfgBusinessName.value.trim() || 'Loyalty Club',
+    businessCategory: cfgBusinessCategory.value.trim() || 'Business',
+    businessTagline: cfgBusinessTagline.value.trim() || '',
+    brandIcon: cfgBrandIcon.value.trim() || '🐰',
+    currencySymbol: cfgCurrencySymbol.value.trim() || '₹',
+    targetStamps: targetStamps,
+    minSpend: parseInt(cfgMinSpend.value, 10) || 0,
+    stampIcon: cfgStampIcon.value.trim() || '★',
+    vipIcon: cfgVipIcon.value.trim() || '👑',
+    rewardTitle: cfgRewardTitle.value.trim() || 'Complimentary Reward',
+    rewardValue: rewardValue,
+    rewardExpiryDays: parseInt(cfgRewardExpiry.value, 10) || 60,
+    referralMessage: cfgReferralMessage.value.trim(),
+    streakBonusDays: parseInt(cfgStreakDays.value, 10) || 14,
+    updatedAt: serverTimestamp()
+  };
+
+  saveSettingsBtn.disabled = true;
+  const originalText = saveSettingsBtn.textContent;
+  saveSettingsBtn.textContent = 'Saving...';
+
+  try {
+    await setDoc(doc(db, 'settings', 'program_config'), updatedConfig, { merge: true });
+    programConfig = { ...programConfig, ...updatedConfig };
+    showToast('Program configuration saved successfully!', 'success');
+    renderCustomersTable(customersCache);
+  } catch (err) {
+    console.error('Error saving program settings:', err);
+    showToast(formatErrorMessage(err), 'error');
+  } finally {
+    saveSettingsBtn.disabled = false;
+    saveSettingsBtn.textContent = originalText;
+  }
+}
+
+function initSettingsStream() {
+  const settingsRef = doc(db, 'settings', 'program_config');
+  onSnapshot(settingsRef, (snap) => {
+    if (snap.exists()) {
+      programConfig = { ...programConfig, ...snap.data() };
+      populateSettingsForm(programConfig);
+      renderCustomersTable(customersCache);
+    }
+  }, (err) => {
+    console.error('Error reading program settings:', err);
+  });
+}
+
+// ----------------------------------------------------
+// Super-Admin Danger Zone Handlers
+// ----------------------------------------------------
+async function handleCustomerStampReset() {
+  if (!isOnline()) {
+    showToast("You're offline. Cannot reset stamps.", 'error');
+    return;
+  }
+
+  const customerId = resetTargetCustomer.value;
+  if (!customerId) {
+    showToast('Please select a customer to reset.', 'error');
+    return;
+  }
+
+  const newStamps = parseInt(resetNewStamps.value, 10);
+  if (isNaN(newStamps) || newStamps < 0 || newStamps > 20) {
+    showToast('Please enter a valid stamp count between 0 and 20.', 'error');
+    return;
+  }
+
+  const customer = customersCache.find(c => c.id === customerId);
+  const cName = customer?.name || 'Customer';
+
+  if (!confirm(`Are you sure you want to set ${cName}'s stamps to ${newStamps}?`)) {
+    return;
+  }
+
+  executeCustomerResetBtn.disabled = true;
+  try {
+    const target = Number(programConfig.targetStamps || 10);
+    await updateDoc(doc(db, 'customers', customerId), {
+      stampCount: newStamps,
+      rewardAvailable: newStamps >= target,
+      updatedAt: serverTimestamp()
+    });
+
+    showToast(`Stamps updated to ${newStamps} for ${cName}.`, 'success');
+  } catch (err) {
+    console.error('Error resetting customer stamps:', err);
+    showToast(formatErrorMessage(err), 'error');
+  } finally {
+    executeCustomerResetBtn.disabled = false;
+  }
+}
+
+async function handlePurgeHistory() {
+  if (!isOnline()) {
+    showToast("You're offline. Cannot purge history.", 'error');
+    return;
+  }
+
+  if (!confirm('Are you sure you want to permanently delete all completed/rejected visits and redeemed rewards? This cannot be undone.')) {
+    return;
+  }
+
+  purgeHistoryBtn.disabled = true;
+  const originalText = purgeHistoryBtn.textContent;
+  purgeHistoryBtn.textContent = 'Purging completed history...';
+
+  try {
+    // 1. Fetch completed/rejected visits
+    const visitsSnap = await getDocs(collection(db, 'visits'));
+    const completedVisits = visitsSnap.docs.filter(d => {
+      const status = d.data().status;
+      return status === 'approved' || status === 'rejected';
+    });
+
+    // 2. Fetch redeemed rewards
+    const rewardsSnap = await getDocs(collection(db, 'rewards'));
+    const redeemedRewards = rewardsSnap.docs.filter(d => d.data().status === 'redeemed');
+
+    // 3. Batch delete in chunks of 400
+    const allToDelete = [
+      ...completedVisits.map(d => doc(db, 'visits', d.id)),
+      ...redeemedRewards.map(d => doc(db, 'rewards', d.id))
+    ];
+
+    if (allToDelete.length === 0) {
+      showToast('No completed history found to purge.', 'info');
+      return;
+    }
+
+    const chunkSize = 400;
+    for (let i = 0; i < allToDelete.length; i += chunkSize) {
+      const batch = writeBatch(db);
+      const chunk = allToDelete.slice(i, i + chunkSize);
+      chunk.forEach(ref => batch.delete(ref));
+      await batch.commit();
+    }
+
+    showToast(`Successfully purged ${allToDelete.length} historical records!`, 'success');
+  } catch (err) {
+    console.error('Error purging history:', err);
+    showToast(formatErrorMessage(err), 'error');
+  } finally {
+    purgeHistoryBtn.disabled = false;
+    purgeHistoryBtn.textContent = originalText;
+  }
+}
+
+async function handleFactoryReset() {
+  if (!isOnline()) {
+    showToast("You're offline. Cannot execute factory reset.", 'error');
+    return;
+  }
+
+  const confirmText = factoryResetConfirmInput.value.trim();
+  if (confirmText !== 'RESET') {
+    showToast('Please type RESET in uppercase to confirm.', 'error');
+    return;
+  }
+
+  if (!confirm('DANGER: Master Factory Reset will reset ALL customer stamp cards to 0, cycle to 1, and wipe all visits, rewards, and phone mappings. Proceed?')) {
+    return;
+  }
+
+  factoryResetBtn.disabled = true;
+  const originalText = factoryResetBtn.textContent;
+  factoryResetBtn.textContent = 'Executing Factory Reset...';
+
+  try {
+    // 1. Reset all customers to initial state
+    const custSnap = await getDocs(collection(db, 'customers'));
+    const custChunks = [];
+    let currentBatch = writeBatch(db);
+    let count = 0;
+
+    for (const cDoc of custSnap.docs) {
+      currentBatch.update(doc(db, 'customers', cDoc.id), {
+        stampCount: 0,
+        cycleNumber: 1,
+        totalVisits: 0,
+        totalRewards: 0,
+        rewardAvailable: false,
+        lastVisitAt: null,
+        updatedAt: serverTimestamp()
+      });
+      count++;
+      if (count === 400) {
+        custChunks.push(currentBatch.commit());
+        currentBatch = writeBatch(db);
+        count = 0;
+      }
+    }
+    if (count > 0) custChunks.push(currentBatch.commit());
+    await Promise.all(custChunks);
+
+    // 2. Delete all visits
+    const visitsSnap = await getDocs(collection(db, 'visits'));
+    for (let i = 0; i < visitsSnap.docs.length; i += 400) {
+      const b = writeBatch(db);
+      visitsSnap.docs.slice(i, i + 400).forEach(d => b.delete(doc(db, 'visits', d.id)));
+      await b.commit();
+    }
+
+    // 3. Delete all rewards
+    const rewardsSnap = await getDocs(collection(db, 'rewards'));
+    for (let i = 0; i < rewardsSnap.docs.length; i += 400) {
+      const b = writeBatch(db);
+      rewardsSnap.docs.slice(i, i + 400).forEach(d => b.delete(doc(db, 'rewards', d.id)));
+      await b.commit();
+    }
+
+    // 4. Delete phone_index
+    const phoneSnap = await getDocs(collection(db, 'phone_index'));
+    for (let i = 0; i < phoneSnap.docs.length; i += 400) {
+      const b = writeBatch(db);
+      phoneSnap.docs.slice(i, i + 400).forEach(d => b.delete(doc(db, 'phone_index', d.id)));
+      await b.commit();
+    }
+
+    factoryResetConfirmInput.value = '';
+    factoryResetBtn.disabled = true;
+    factoryResetBtn.style.opacity = '0.5';
+
+    showToast('Master Factory Reset completed! Loyalty state is pristine.', 'success');
+  } catch (err) {
+    console.error('Error during factory reset:', err);
+    showToast(formatErrorMessage(err), 'error');
+  } finally {
+    factoryResetBtn.textContent = originalText;
+  }
+}
+
+// ----------------------------------------------------
 // Main Initialization Flow
 // ----------------------------------------------------
 function initAdminApp() {
@@ -508,6 +868,7 @@ function initAdminApp() {
       unauthorizedView.classList.add('hidden');
       adminMainView.classList.remove('hidden');
 
+      initSettingsStream();
       initCustomersStream();
       initStaffStream();
       initAuditLogs();
@@ -521,4 +882,26 @@ function initAdminApp() {
 loginForm.addEventListener('submit', handleLogin);
 signoutBtn.addEventListener('click', handleSignOut);
 
+if (programSettingsForm) {
+  programSettingsForm.addEventListener('submit', handleSaveSettings);
+}
+
+if (executeCustomerResetBtn) {
+  executeCustomerResetBtn.addEventListener('click', handleCustomerStampReset);
+}
+
+if (purgeHistoryBtn) {
+  purgeHistoryBtn.addEventListener('click', handlePurgeHistory);
+}
+
+if (factoryResetConfirmInput && factoryResetBtn) {
+  factoryResetConfirmInput.addEventListener('input', () => {
+    const isReset = factoryResetConfirmInput.value.trim() === 'RESET';
+    factoryResetBtn.disabled = !isReset;
+    factoryResetBtn.style.opacity = isReset ? '1' : '0.5';
+  });
+  factoryResetBtn.addEventListener('click', handleFactoryReset);
+}
+
 initAdminApp();
+

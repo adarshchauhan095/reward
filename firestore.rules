@@ -109,7 +109,7 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time
         && request.resource.data.stampCount is int
         && request.resource.data.stampCount >= 0
-        && request.resource.data.stampCount <= 10
+        && request.resource.data.stampCount <= 20
         && request.resource.data.cycleNumber is int
         && request.resource.data.cycleNumber >= resource.data.cycleNumber
         && request.resource.data.totalVisits is int
@@ -117,6 +117,9 @@ service cloud.firestore {
         && request.resource.data.totalRewards is int
         && request.resource.data.totalRewards >= resource.data.totalRewards
         && request.resource.data.rewardAvailable is bool
+      ) || (
+        // Super-Admin management (stamp reset, cycle adjustment, profile fix)
+        isAdmin()
       );
 
       // Only Admin can delete customer records
@@ -150,7 +153,7 @@ service cloud.firestore {
         && (!('approvedBy' in request.resource.data) || request.resource.data.approvedBy == null);
 
       // Active staff approves or rejects pending visit
-      allow update: if isActiveStaff()
+      allow update: if (isActiveStaff()
         && resource.data.status == 'pending'
         && (request.resource.data.status == 'approved' || request.resource.data.status == 'rejected')
         && request.resource.data.customerId == resource.data.customerId
@@ -159,9 +162,10 @@ service cloud.firestore {
         && request.resource.data.approvedAt == request.time
         && request.resource.data.approvedBy == request.auth.uid
         && (
-          (request.resource.data.status == 'approved' && request.resource.data.stampNumber >= 1 && request.resource.data.stampNumber <= 10)
+          (request.resource.data.status == 'approved' && request.resource.data.stampNumber >= 1 && request.resource.data.stampNumber <= 20)
           || (request.resource.data.status == 'rejected' && request.resource.data.stampNumber == 0)
-        );
+        )
+      ) || isAdmin();
 
       // Only Admin can delete visit records
       allow delete: if isAdmin();
@@ -179,11 +183,12 @@ service cloud.firestore {
 
       allow list: if (isAuthenticated() && request.query.limit <= 25) || isActiveStaff();
 
-      // Rewards are created ONLY by active staff as part of 10th visit approval transaction
+      // Rewards are created ONLY by active staff as part of target stamp visit approval transaction
       allow create: if isActiveStaff()
         && request.resource.data.status == 'available'
-        && request.resource.data.type == 'complimentary_service'
-        && request.resource.data.value == 3000
+        && request.resource.data.type is string
+        && request.resource.data.value is int
+        && request.resource.data.value > 0
         && request.resource.data.cycleNumber is int
         && request.resource.data.cycleNumber >= 1
         && request.resource.data.customerId is string
@@ -191,8 +196,8 @@ service cloud.firestore {
         && (!('redeemedAt' in request.resource.data) || request.resource.data.redeemedAt == null)
         && (!('redeemedBy' in request.resource.data) || request.resource.data.redeemedBy == null);
 
-      // Active staff redeems reward
-      allow update: if isActiveStaff()
+      // Active staff redeems reward; Admin can manage
+      allow update: if (isActiveStaff()
         && resource.data.status == 'available'
         && request.resource.data.status == 'redeemed'
         && request.resource.data.customerId == resource.data.customerId
@@ -201,10 +206,22 @@ service cloud.firestore {
         && request.resource.data.value == resource.data.value
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.redeemedAt == request.time
-        && request.resource.data.redeemedBy == request.auth.uid;
+        && request.resource.data.redeemedBy == request.auth.uid
+      ) || isAdmin();
 
       // Only Admin can delete reward records
       allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------
+    // SETTINGS COLLECTION (Universal Multi-Business SaaS Configuration)
+    // ----------------------------------------------------
+    match /settings/{docId} {
+      // Authenticated users can read public configuration
+      allow read: if isAuthenticated();
+
+      // Only Super-Admin can update business settings
+      allow write: if isAdmin();
     }
 
     // ----------------------------------------------------

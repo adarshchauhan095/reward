@@ -53,6 +53,17 @@ const checkinContainer = document.getElementById('checkin-container');
 const checkinBtn = document.getElementById('checkin-btn');
 const rewardVoucher = document.getElementById('reward-voucher');
 
+// Dynamic Branding & Growth Boosters
+const appBrandIcon = document.getElementById('app-brand-icon');
+const appStudioName = document.getElementById('app-studio-name');
+const appClubTitle = document.getElementById('app-club-title');
+const appOfferTagline = document.getElementById('app-offer-tagline');
+const streakBanner = document.getElementById('streak-banner');
+const voucherTitle = document.getElementById('voucher-title');
+const voucherDesc = document.getElementById('voucher-desc');
+const whatsappShareBtn = document.getElementById('whatsapp-share-btn');
+const footerBusinessName = document.getElementById('footer-business-name');
+
 const toggleHistoryBtn = document.getElementById('toggle-history-btn');
 const historyContainer = document.getElementById('history-container');
 const toastContainer = document.getElementById('toast-container');
@@ -67,6 +78,23 @@ let customerUnsubscribe = null;
 let visitsUnsubscribe = null;
 let pendingVisitUnsubscribe = null;
 let isSubmitting = false;
+
+let programConfig = {
+  businessName: 'The Bunny',
+  businessCategory: 'Hair & Beauty Salon',
+  businessTagline: 'Luxury Hair & Beauty Studio',
+  brandIcon: '🐰',
+  currencySymbol: '₹',
+  targetStamps: 10,
+  minSpend: 600,
+  stampIcon: '★',
+  vipIcon: '👑',
+  rewardTitle: 'Complimentary Hair & Beauty Service',
+  rewardValue: 3000,
+  rewardExpiryDays: 60,
+  referralMessage: 'Hey! Join the exclusive VIP Club at The Bunny with me and earn luxury rewards on every visit! Check your loyalty card here: ',
+  streakBonusDays: 14
+};
 
 // ----------------------------------------------------
 // UI Notification & Toast Helpers
@@ -156,22 +184,67 @@ function showLoyalty() {
 }
 
 // ----------------------------------------------------
+// Universal SaaS Program Settings Integration
+// ----------------------------------------------------
+function initSettingsStream() {
+  const settingsRef = doc(db, 'settings', 'program_config');
+  onSnapshot(settingsRef, (docSnap) => {
+    if (docSnap.exists()) {
+      programConfig = { ...programConfig, ...docSnap.data() };
+      applyProgramConfig();
+    }
+  }, (err) => {
+    console.error('Settings stream error:', err);
+  });
+}
+
+function applyProgramConfig() {
+  if (appBrandIcon) appBrandIcon.textContent = programConfig.brandIcon || '🐰';
+  if (appStudioName) appStudioName.textContent = programConfig.businessName || 'The Bunny';
+  if (appOfferTagline) {
+    const cur = programConfig.currencySymbol || '₹';
+    const val = Number(programConfig.rewardValue || 3000).toLocaleString('en-IN');
+    const target = programConfig.targetStamps || 10;
+    appOfferTagline.innerHTML = `Visit ${target} times and unlock a complimentary service worth <strong>${cur}${val}</strong>.`;
+  }
+  if (voucherTitle) {
+    const cur = programConfig.currencySymbol || '₹';
+    const val = Number(programConfig.rewardValue || 3000).toLocaleString('en-IN');
+    voucherTitle.textContent = `${cur}${val} ${programConfig.rewardTitle || 'Complimentary Service'}`;
+  }
+  if (voucherDesc) {
+    voucherDesc.textContent = `Present this screen to your specialist to redeem your ${programConfig.rewardTitle || 'complimentary service'}.`;
+  }
+  if (footerBusinessName) {
+    footerBusinessName.textContent = `${programConfig.businessName || 'The Bunny'} ${programConfig.businessTagline || ''}`;
+  }
+  if (whatsappShareBtn) {
+    const shareText = `${programConfig.referralMessage || 'Join our VIP loyalty club!'} ${window.location.href}`;
+    whatsappShareBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+  }
+
+  if (currentCustomer) {
+    updateCustomerUI(currentCustomer);
+  }
+}
+
+// ----------------------------------------------------
 // Loyalty Card Grid Rendering
 // ----------------------------------------------------
 function renderStampGrid(stampCount, hasPending = false) {
   stampGrid.innerHTML = '';
-  const totalSlots = 10;
+  const totalSlots = Number(programConfig.targetStamps || 10);
 
   for (let i = 1; i <= totalSlots; i++) {
     const slot = document.createElement('div');
     slot.className = 'stamp-slot';
-    if (i === 10) slot.classList.add('slot-vip');
+    if (i === totalSlots) slot.classList.add('slot-vip');
 
     if (i <= stampCount) {
       slot.classList.add('stamped');
       const icon = document.createElement('span');
       icon.className = 'stamp-icon';
-      icon.textContent = i === 10 ? '👑' : '★';
+      icon.textContent = i === totalSlots ? (programConfig.vipIcon || '👑') : (programConfig.stampIcon || '★');
       slot.appendChild(icon);
     } else if (hasPending && i === stampCount + 1) {
       slot.classList.add('pending');
@@ -182,11 +255,11 @@ function renderStampGrid(stampCount, hasPending = false) {
     } else {
       const num = document.createElement('span');
       num.className = 'stamp-num';
-      num.textContent = i === 10 ? 'VIP' : `#${i}`;
+      num.textContent = i === totalSlots ? 'VIP' : `#${i}`;
       
       const icon = document.createElement('span');
       icon.className = 'stamp-icon';
-      icon.textContent = i === 10 ? '🎁' : '○';
+      icon.textContent = i === totalSlots ? (programConfig.vipIcon || '👑') : '○';
       
       slot.appendChild(num);
       slot.appendChild(icon);
@@ -196,11 +269,11 @@ function renderStampGrid(stampCount, hasPending = false) {
   }
 
   // Update progress text and bar
-  progressText.textContent = `${stampCount} / 10`;
-  const pct = Math.min(100, Math.round((stampCount / 10) * 100));
+  progressText.textContent = `${stampCount} / ${totalSlots}`;
+  const pct = Math.min(100, Math.round((stampCount / totalSlots) * 100));
   progressFill.style.width = `${pct}%`;
   
-  const remaining = 10 - stampCount;
+  const remaining = totalSlots - stampCount;
   if (remaining > 0) {
     remainingText.textContent = `${remaining} visit${remaining === 1 ? '' : 's'} remaining`;
   } else {
@@ -273,18 +346,21 @@ function updateCustomerUI(customer) {
 
   const stampCount = Number(customer.stampCount || 0);
   const rewardAvailable = Boolean(customer.rewardAvailable);
+  const targetStamps = Number(programConfig.targetStamps || 10);
 
   renderStampGrid(stampCount, Boolean(activePendingVisit));
 
   // Reward Voucher display
-  if (rewardAvailable || stampCount === 10) {
+  if (rewardAvailable || stampCount >= targetStamps) {
     rewardVoucher.classList.remove('hidden');
     checkinContainer.classList.add('hidden');
     statusBox.className = 'status-card reward-unlocked';
     statusBox.classList.remove('hidden');
     statusIcon.textContent = '🎉';
     statusTitle.textContent = 'Reward Unlocked!';
-    statusDesc.textContent = 'Enjoy a complimentary service worth ₹3,000.';
+    const cur = programConfig.currencySymbol || '₹';
+    const val = Number(programConfig.rewardValue || 3000).toLocaleString('en-IN');
+    statusDesc.textContent = `Enjoy your complimentary reward worth ${cur}${val}.`;
     launchConfetti();
   } else {
     rewardVoucher.classList.add('hidden');
@@ -295,13 +371,36 @@ function updateCustomerUI(customer) {
       statusBox.classList.remove('hidden');
       statusIcon.textContent = '⏳';
       statusTitle.textContent = 'Visit Detected';
-      statusDesc.textContent = 'Waiting for salon confirmation...';
+      statusDesc.textContent = 'Waiting for confirmation...';
       checkinBtn.disabled = true;
-      checkinBtn.querySelector('span').textContent = 'Waiting for Salon Confirmation...';
+      checkinBtn.querySelector('span').textContent = 'Waiting for Confirmation...';
     } else {
       checkinBtn.disabled = !isOnline();
       checkinBtn.querySelector('span').textContent = "Record Today's Visit";
       statusBox.classList.add('hidden');
+    }
+  }
+
+  // Streak Banner handling
+  if (streakBanner) {
+    const streakDays = Number(programConfig.streakBonusDays || 0);
+    if (streakDays > 0 && customer.lastVisitAt) {
+      const lastTime = customer.lastVisitAt.toDate ? customer.lastVisitAt.toDate().getTime() : 0;
+      if (lastTime > 0) {
+        const daysSince = Math.floor((Date.now() - lastTime) / (1000 * 60 * 60 * 24));
+        const daysLeft = streakDays - daysSince;
+        if (daysLeft >= 0) {
+          streakBanner.innerHTML = `<span>🔥 <strong>Visit Streak Active:</strong> Return within <strong>${daysLeft === 0 ? 'today' : daysLeft + ' days'}</strong> to keep your streak!</span>`;
+          streakBanner.classList.remove('hidden');
+        } else {
+          streakBanner.innerHTML = `<span>⚡ <strong>Streak Expired:</strong> Record a visit today to kick off a new streak!</span>`;
+          streakBanner.classList.remove('hidden');
+        }
+      } else {
+        streakBanner.classList.add('hidden');
+      }
+    } else {
+      streakBanner.classList.add('hidden');
     }
   }
 
@@ -629,6 +728,7 @@ async function toggleHistory() {
 async function initializeApp() {
   showLoading();
   updateOfflineStatus();
+  initSettingsStream();
 
   // Listen to Auth State
   onAuthStateChanged(auth, async (user) => {

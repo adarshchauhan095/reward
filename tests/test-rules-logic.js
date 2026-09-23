@@ -89,8 +89,8 @@ assert.match(
 );
 assert.match(
   rulesContent,
-  /allow\s+update:\s*if\s+isActiveStaff\(\)/,
-  'Only active staff can approve/reject visits'
+  /allow\s+update:\s*if\s+\(isActiveStaff\(\)/,
+  'Only active staff (or admin) can approve/reject visits'
 );
 
 // 8. Invariant: Rewards collection authorization
@@ -106,18 +106,18 @@ assert.match(
 );
 assert.match(
   rulesContent,
-  /request\.resource\.data\.value\s*==\s*3000/,
-  'Reward value must be exactly ₹3,000'
+  /request\.resource\.data\.value\s+is\s+int\s*&&\s*request\.resource\.data\.value\s*>\s*0/,
+  'Reward value must be a positive integer'
 );
 assert.match(
   rulesContent,
-  /request\.resource\.data\.type\s*==\s*'complimentary_service'/,
-  'Reward type must be complimentary_service'
+  /request\.resource\.data\.type\s+is\s+string/,
+  'Reward type must be a string'
 );
 assert.match(
   rulesContent,
-  /allow\s+update:\s*if\s+isActiveStaff\(\)/,
-  'Only active staff can redeem rewards'
+  /allow\s+update:\s*if\s+\(isActiveStaff\(\)/,
+  'Only active staff (or admin) can redeem/manage rewards'
 );
 
 // 9. Invariant: Staff management authorization
@@ -144,4 +144,21 @@ assert.match(
   'Authenticated users can retrieve customerId by phone'
 );
 
-console.log('✓ All 10 Security Rules assertions passed successfully!');
+// 11. Invariant: Settings collection authorization (Universal Multi-Business SaaS Configuration)
+assert.match(
+  rulesContent,
+  /match\s+\/settings\/\{docId\}/,
+  'Must have match block for settings collection'
+);
+assert.match(
+  rulesContent,
+  /allow\s+read:\s*if\s+isAuthenticated\(\);/,
+  'Authenticated users can read program settings'
+);
+assert.match(
+  rulesContent,
+  /allow\s+write:\s*if\s+isAdmin\(\);/,
+  'Only super-admin can write program settings'
+);
+
+console.log('✓ All 11 Security Rules assertions passed successfully!');
