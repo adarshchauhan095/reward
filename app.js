@@ -11,6 +11,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   collection,
   query,
   where,
@@ -420,9 +421,14 @@ async function handleRegistration(e) {
     if (existingCustomerId) {
       // Returning customer logging in from a different / new device
       const existingCustomerRef = doc(db, 'customers', existingCustomerId);
-      const existingCustomerSnap = await getDoc(existingCustomerRef);
+      let existingCustomerSnap = null;
+      try {
+        existingCustomerSnap = await getDoc(existingCustomerRef);
+      } catch (getErr) {
+        console.warn('Customer fetch notice:', getErr);
+      }
 
-      if (existingCustomerSnap.exists()) {
+      if (existingCustomerSnap && existingCustomerSnap.exists()) {
         const existingData = existingCustomerSnap.data();
 
         // Link this new device's anonymous UID to the customer profile
@@ -430,8 +436,7 @@ async function handleRegistration(e) {
         if (currentUser && !linkedUids.includes(currentUser.uid)) {
           linkedUids.push(currentUser.uid);
           try {
-            await setDoc(existingCustomerRef, {
-              ...existingData,
+            await updateDoc(existingCustomerRef, {
               linkedUids: linkedUids,
               updatedAt: serverTimestamp()
             });
