@@ -60,6 +60,7 @@ const confettiCanvas = document.getElementById('confetti-canvas');
 // State
 let currentUser = null;
 let currentCustomer = null;
+let currentCustomerId = null;
 let activePendingVisit = null;
 let customerUnsubscribe = null;
 let visitsUnsubscribe = null;
@@ -309,13 +310,13 @@ function updateCustomerUI(customer) {
 // ----------------------------------------------------
 // Realtime Pending Visit Listener
 // ----------------------------------------------------
-function listenToPendingVisits(uid) {
+function listenToPendingVisits(cid) {
   if (pendingVisitUnsubscribe) pendingVisitUnsubscribe();
 
   const visitsRef = collection(db, 'visits');
   const q = query(
     visitsRef,
-    where('customerId', '==', uid),
+    where('customerId', '==', cid),
     where('status', '==', 'pending'),
     limit(1)
   );
@@ -341,7 +342,33 @@ function listenToPendingVisits(uid) {
 }
 
 // ----------------------------------------------------
-// Customer Registration Flow (First Visit)
+// Realtime Customer Profile Listener
+// ----------------------------------------------------
+function listenToCustomer(cid) {
+  currentCustomerId = cid;
+  try {
+    localStorage.setItem('bunny_customer_id', cid);
+  } catch (e) {}
+
+  const customerRef = doc(db, 'customers', cid);
+  if (customerUnsubscribe) customerUnsubscribe();
+
+  customerUnsubscribe = onSnapshot(customerRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      listenToPendingVisits(cid);
+      updateCustomerUI(data);
+    } else {
+      showRegistration();
+    }
+  }, (error) => {
+    console.error('Customer snapshot error:', error);
+    showError(formatErrorMessage(error));
+  });
+}
+
+// ----------------------------------------------------
+// Customer Registration & Cross-Device Account Retrieval
 // ----------------------------------------------------
 async function handleRegistration(e) {
   e.preventDefault();
@@ -374,9 +401,55 @@ async function handleRegistration(e) {
   isSubmitting = true;
   joinBtn.disabled = true;
   const originalBtnText = joinBtn.querySelector('span').textContent;
-  joinBtn.querySelector('span').textContent = 'Creating Loyalty Card...';
+  joinBtn.querySelector('span').textContent = 'Connecting Loyalty Card...';
 
   try {
+    // 1. Check if an account already exists for this phone number across devices
+    const phoneIndexRef = doc(db, 'phone_index', sanitizedPhone);
+    let existingCustomerId = null;
+
+    try {
+      const phoneIndexSnap = await getDoc(phoneIndexRef);
+      if (phoneIndexSnap.exists()) {
+        existingCustomerId = phoneIndexSnap.data().customerId;
+      }
+    } catch (indexLookupErr) {
+      console.warn('Phone index lookup note:', indexLookupErr);
+    }
+
+    if (existingCustomerId) {
+      // Returning customer logging in from a different / new device
+      const existingCustomerRef = doc(db, 'customers', existingCustomerId);
+      const existingCustomerSnap = await getDoc(existingCustomerRef);
+
+      if (existingCustomerSnap.exists()) {
+        const existingData = existingCustomerSnap.data();
+
+        // Link this new device's anonymous UID to the customer profile
+        const linkedUids = Array.isArray(existingData.linkedUids) ? [...existingData.linkedUids] : [];
+        if (currentUser && !linkedUids.includes(currentUser.uid)) {
+          linkedUids.push(currentUser.uid);
+          try {
+            await setDoc(existingCustomerRef, {
+              ...existingData,
+              linkedUids: linkedUids,
+              updatedAt: serverTimestamp()
+            });
+          } catch (linkErr) {
+            console.warn('Profile linked in active session:', linkErr);
+          }
+        }
+
+        listenToCustomer(existingCustomerId);
+        showToast(`✨ Welcome back, ${existingData.name || cleanCustomerName}! Your stamps are restored.`, 'success');
+        isSubmitting = false;
+        joinBtn.disabled = false;
+        joinBtn.querySelector('span').textContent = originalBtnText;
+        return;
+      }
+    }
+
+    // 2. New Customer Registration
     const customerRef = doc(db, 'customers', currentUser.uid);
     const initialCustomerData = {
       name: cleanCustomerName,
@@ -386,15 +459,28 @@ async function handleRegistration(e) {
       totalVisits: 0,
       totalRewards: 0,
       rewardAvailable: false,
+      linkedUids: [currentUser.uid],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastVisitAt: null
     };
 
-    // 1. Create initial customer document
+    // Create initial customer document
     await setDoc(customerRef, initialCustomerData);
 
-    // 2. Automatically create initial pending visit
+    // Create phone_index entry so any other devices find this customer
+    try {
+      await setDoc(phoneIndexRef, {
+        customerId: currentUser.uid,
+        phone: sanitizedPhone,
+        name: cleanCustomerName,
+        createdAt: serverTimestamp()
+      });
+    } catch (indexErr) {
+      console.warn('Phone index created with notice:', indexErr);
+    }
+
+    // Automatically create initial pending visit
     const newVisitRef = doc(collection(db, 'visits'));
     await setDoc(newVisitRef, {
       customerId: currentUser.uid,
@@ -406,10 +492,12 @@ async function handleRegistration(e) {
       approvedBy: null
     });
 
+    listenToCustomer(currentUser.uid);
     showToast('Welcome to The Bunny Loyalty Club!', 'success');
   } catch (err) {
     console.error('Registration failed:', err);
     showToast(formatErrorMessage(err), 'error');
+  } finally {
     isSubmitting = false;
     joinBtn.disabled = false;
     joinBtn.querySelector('span').textContent = originalBtnText;
@@ -442,10 +530,11 @@ async function handleCheckin() {
   checkinBtn.querySelector('span').textContent = 'Detecting Visit...';
 
   try {
+    const targetCustomerId = currentCustomerId || currentUser.uid;
     // Create new pending visit in Firestore
     const newVisitRef = doc(collection(db, 'visits'));
     await setDoc(newVisitRef, {
-      customerId: currentUser.uid,
+      customerId: targetCustomerId,
       cycleNumber: currentCustomer.cycleNumber || 1,
       stampNumber: 0,
       status: 'pending',
@@ -476,10 +565,11 @@ async function toggleHistory() {
       historyContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 12px; text-align: center;">Loading history...</p>';
       
       try {
+        const targetCustomerId = currentCustomerId || currentUser.uid;
         const visitsRef = collection(db, 'visits');
         const q = query(
           visitsRef,
-          where('customerId', '==', currentUser.uid),
+          where('customerId', '==', targetCustomerId),
           where('status', '==', 'approved'),
           limit(20)
         );
@@ -549,23 +639,39 @@ async function initializeApp() {
 
     currentUser = user;
 
-    // Realtime Customer Profile Listener
-    const customerRef = doc(db, 'customers', user.uid);
-    if (customerUnsubscribe) customerUnsubscribe();
+    // Check if device already has a stored customer reference from previous visit
+    let storedCid = null;
+    try {
+      storedCid = localStorage.getItem('bunny_customer_id');
+    } catch (e) {}
 
-    customerUnsubscribe = onSnapshot(customerRef, (docSnapshot) => {
-      if (docSnapshot.exists()) {
-        const data = docSnapshot.data();
-        listenToPendingVisits(user.uid);
-        updateCustomerUI(data);
-      } else {
-        // Customer profile does not exist -> Show registration form
-        showRegistration();
+    // First, check user.uid directly
+    const customerRef = doc(db, 'customers', currentUser.uid);
+    try {
+      const snap = await getDoc(customerRef);
+      if (snap.exists()) {
+        listenToCustomer(user.uid);
+        return;
       }
-    }, (error) => {
-      console.error('Customer snapshot error:', error);
-      showError(formatErrorMessage(error));
-    });
+    } catch (e) {
+      console.warn('Direct profile check notice:', e);
+    }
+
+    // Next, check stored customer reference if different from current UID
+    if (storedCid && storedCid !== user.uid) {
+      try {
+        const storedSnap = await getDoc(doc(db, 'customers', storedCid));
+        if (storedSnap.exists()) {
+          listenToCustomer(storedCid);
+          return;
+        }
+      } catch (e) {
+        console.warn('Stored customer reference lookup note:', e);
+      }
+    }
+
+    // No existing profile found on this device -> Show registration form
+    showRegistration();
   });
 }
 

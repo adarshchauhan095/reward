@@ -132,4 +132,16 @@ assert.match(
   'Only admin can create, update, or delete staff records'
 );
 
-console.log('✓ All 9 Security Rules assertions passed successfully!');
+// 10. Invariant: Phone Index collection authorization (Multi-device customer continuity)
+assert.match(
+  rulesContent,
+  /match\s+\/phone_index\/\{phone\}/,
+  'Must have match block for phone_index collection'
+);
+assert.match(
+  rulesContent,
+  /allow\s+get:\s*if\s+isAuthenticated\(\)/,
+  'Authenticated users can retrieve customerId by phone'
+);
+
+console.log('✓ All 10 Security Rules assertions passed successfully!');

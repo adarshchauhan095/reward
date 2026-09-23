@@ -307,4 +307,53 @@ assert.strictEqual(db.rewards.size, 1);
 assert.strictEqual(db.rewards.get(createdRewardId).status, 'redeemed');
 console.log('  ✓ Cycle 2 operates seamlessly and historical visits/rewards remain preserved intact');
 
+// 11. Test: Multi-Device Stamp Retention via Phone Continuity
+console.log('Test 11: Multi-Device Stamp Retention via Phone Continuity');
+// Customer on Device A registers with phone 9876543210 and collects 2 stamps
+const deviceAPhone = '9876543210';
+const deviceAUid = 'cust_device_a';
+db.customers.set(deviceAUid, {
+  name: 'Kavita Roy',
+  phone: deviceAPhone,
+  stampCount: 2, // collected 2 stamps on Device A
+  cycleNumber: 1,
+  totalVisits: 2,
+  totalRewards: 0,
+  rewardAvailable: false,
+  linkedUids: [deviceAUid]
+});
+if (!db.phoneIndex) db.phoneIndex = new Map();
+db.phoneIndex.set(deviceAPhone, { customerId: deviceAUid });
+
+// Now customer loses phone and logs in from Device B with brand new UID:
+const deviceBUid = 'cust_device_b_new';
+// Device B looks up phoneIndex by phone
+const indexedRecord = db.phoneIndex.get(deviceAPhone);
+assert.ok(indexedRecord, 'Customer record must be found by phone number');
+assert.strictEqual(indexedRecord.customerId, deviceAUid, 'Points to canonical customer ID');
+
+// Retrieve existing customer profile
+const existingCustomer = db.customers.get(indexedRecord.customerId);
+assert.strictEqual(existingCustomer.stampCount, 2, 'Existing 2 stamps must be intact on Device B');
+
+// Link Device B to customer profile
+existingCustomer.linkedUids.push(deviceBUid);
+
+// Device B requests visit #3
+const deviceBVisitId = 'visit_device_b_003';
+db.visits.set(deviceBVisitId, {
+  customerId: existingCustomer.linkedUids[0], // canonical customerId
+  cycleNumber: existingCustomer.cycleNumber,
+  stampNumber: 0,
+  status: 'pending',
+  createdAt: new Date(),
+  approvedAt: null,
+  approvedBy: null
+});
+
+// Staff approves visit #3
+await executeApprovalTransaction(deviceBVisitId, staffMemberUid);
+assert.strictEqual(db.customers.get(deviceAUid).stampCount, 3, 'Stamp count progresses to 3 after staff approval');
+console.log('  ✓ Multi-device login with same phone successfully retains existing stamps and advances progression');
+
 console.log('\n--- ALL TRANSACTION & END-TO-END FLOW TESTS PASSED! ---');

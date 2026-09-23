@@ -9,7 +9,12 @@ service cloud.firestore {
     }
 
     function isCustomer(uid) {
-      return isAuthenticated() && request.auth.uid == uid;
+      return isAuthenticated() && (
+        request.auth.uid == uid ||
+        (exists(/databases/$(database)/documents/customers/$(uid)) &&
+         'linkedUids' in get(/databases/$(database)/documents/customers/$(uid)).data &&
+         request.auth.uid in get(/databases/$(database)/documents/customers/$(uid)).data.linkedUids)
+      );
     }
 
     function getStaffData() {
@@ -27,6 +32,24 @@ service cloud.firestore {
 
     function isAdmin() {
       return isActiveStaff() && getStaffData().role == 'admin';
+    }
+
+    // ----------------------------------------------------
+    // PHONE INDEX COLLECTION (Multi-device customer continuity)
+    // ----------------------------------------------------
+    match /phone_index/{phone} {
+      // Authenticated users can retrieve customerId by phone
+      allow get: if isAuthenticated() && phone.matches('^[6-9][0-9]{9}$');
+
+      // Create initial phone index mapping during customer registration
+      allow create: if isAuthenticated()
+        && phone.matches('^[6-9][0-9]{9}$')
+        && request.resource.data.customerId is string
+        && request.resource.data.createdAt == request.time;
+
+      // Allow active staff or admin to maintain phone index
+      allow update: if isActiveStaff();
+      allow delete: if isAdmin();
     }
 
     // ----------------------------------------------------
@@ -53,11 +76,11 @@ service cloud.firestore {
         && (!('lastVisitAt' in request.resource.data) || request.resource.data.lastVisitAt == null);
 
       // Updates:
-      // 1. Customer updating their own profile (name, phone) - cannot touch stamps/rewards/cycles
+      // 1. Customer updating their own profile (name, phone, or multi-device linking) - cannot touch stamps/rewards/cycles
       // 2. Active Staff during approval transaction or reward redemption
       allow update: if (
-        // Customer profile self-update (contact info only)
-        isCustomer(uid)
+        // Customer profile self-update or multi-device linking
+        (isCustomer(uid) || isAuthenticated())
         && request.resource.data.stampCount == resource.data.stampCount
         && request.resource.data.cycleNumber == resource.data.cycleNumber
         && request.resource.data.totalVisits == resource.data.totalVisits
@@ -69,6 +92,7 @@ service cloud.firestore {
         && request.resource.data.name.size() >= 2
         && request.resource.data.name.size() <= 60
         && request.resource.data.phone is string
+        && request.resource.data.phone == resource.data.phone
         && request.resource.data.phone.matches('^[6-9][0-9]{9}$')
       ) || (
         // Active Staff performing transaction (visit approval or reward redemption)
@@ -98,12 +122,21 @@ service cloud.firestore {
     // ----------------------------------------------------
     match /visits/{visitId} {
       // Customers can read their own visits; Active staff/admin can read all visits
-      allow read: if (isAuthenticated() && resource.data.customerId == request.auth.uid)
-        || isActiveStaff();
+      allow read: if (isAuthenticated() && (
+        resource.data.customerId == request.auth.uid ||
+        (exists(/databases/$(database)/documents/customers/$(resource.data.customerId)) &&
+         'linkedUids' in get(/databases/$(database)/documents/customers/$(resource.data.customerId)).data &&
+         request.auth.uid in get(/databases/$(database)/documents/customers/$(resource.data.customerId)).data.linkedUids)
+      )) || isActiveStaff();
 
       // Customer creates their own pending visit
       allow create: if isAuthenticated()
-        && request.resource.data.customerId == request.auth.uid
+        && (
+          request.resource.data.customerId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/customers/$(request.resource.data.customerId)) &&
+           'linkedUids' in get(/databases/$(database)/documents/customers/$(request.resource.data.customerId)).data &&
+           request.auth.uid in get(/databases/$(database)/documents/customers/$(request.resource.data.customerId)).data.linkedUids)
+        )
         && request.resource.data.status == 'pending'
         && request.resource.data.stampNumber == 0
         && request.resource.data.cycleNumber is int
@@ -135,8 +168,12 @@ service cloud.firestore {
     // ----------------------------------------------------
     match /rewards/{rewardId} {
       // Customers can read their own rewards; Active staff/admin can read all rewards
-      allow read: if (isAuthenticated() && resource.data.customerId == request.auth.uid)
-        || isActiveStaff();
+      allow read: if (isAuthenticated() && (
+        resource.data.customerId == request.auth.uid ||
+        (exists(/databases/$(database)/documents/customers/$(resource.data.customerId)) &&
+         'linkedUids' in get(/databases/$(database)/documents/customers/$(resource.data.customerId)).data &&
+         request.auth.uid in get(/databases/$(database)/documents/customers/$(resource.data.customerId)).data.linkedUids)
+      )) || isActiveStaff();
 
       // Rewards are created ONLY by active staff as part of 10th visit approval transaction
       allow create: if isActiveStaff()
